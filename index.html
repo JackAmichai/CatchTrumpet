@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game</title>
+    <style>
+        /* Existing game styles placeholder */
+        body { margin: 0; padding: 0; font-family: sans-serif; height: 100vh; background: #f0f0f0; }
+
+        /* BACKGROUND QUOTES LAYER */
+        #quote-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0; /* Behind the text */
+            pointer-events: none;
+        }
+
+        .bg-quote {
+            position: absolute;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            text-transform: uppercase;
+            opacity: 0.15; /* Faint, ghost-like appearance */
+            color: #8b0000; /* Blood/Ink red */
+            white-space: nowrap;
+            font-size: 14px;
+            transform-origin: center;
+            user-select: none;
+            mix-blend-mode: multiply; /* Blends into the paper texture */
+        }
+    </style>
+</head>
+<body>
+    <div id="quote-layer"></div>
+
+    <!-- Existing game content placeholder -->
+    <div style="position: relative; z-index: 1; padding: 20px;">
+        <h1>Game Title</h1>
+        <p>This is where the game content would be.</p>
+    </div>
+
+    <script>
+        /* EXACT QUOTES FROM AG BONDI (2026 HEARING)
+           Context: Responses to Rep. Raskin, Rep. Jayapal, and Rep. Massie
+           regarding the release of unredacted victim names vs. redacted perpetrators.
+        */
+        const terribleQuotes = [
+            "I WILL NOT GET IN THE GUTTER FOR HER THEATRICS.",
+            "YOU’RE A WASHED-UP, LOSER LAWYER.",
+            "THERE IS NO INCRIMINATING CLIENT LIST.",
+            "I AM NOT GOING TO HAVE IT.",
+            "YOU SIT HERE AND YOU ATTACK THE PRESIDENT.",
+            "THIS IS SO RIDICULOUS.",
+            "WE HAVE DONE OUR VERY BEST.",
+            "IT IS A LOW ERROR RATE.",
+            "IF A VICTIM'S NAME WAS UNREDACTED, BRING IT TO US.",
+            "I'M NOT GOING TO PUT UP WITH IT.",
+            "THAT IS A POLITICAL STUNT.",
+            "WE FOLLOWED THE LAW.",
+            "IT WAS PROCESSED VERY QUICKLY."
+        ];
+
+        function generateBackgroundQuotes() {
+            const layer = document.getElementById('quote-layer');
+            layer.innerHTML = ''; // Clear previous
+
+            const numberOfQuotes = 25; // How many quotes to scatter
+            const pageHeight = document.body.scrollHeight || 1200;
+            const pageWidth = document.body.scrollWidth || 800;
+
+            for (let i = 0; i < numberOfQuotes; i++) {
+                const span = document.createElement('span');
+                span.classList.add('bg-quote');
+
+                // Pick a random quote
+                span.innerText = terribleQuotes[Math.floor(Math.random() * terribleQuotes.length)];
+
+                // Random positioning across the full document height
+                const top = Math.floor(Math.random() * pageHeight);
+                const left = Math.floor(Math.random() * (pageWidth - 200)); // Keep mostly onscreen
+
+                // Random rotation for chaotic effect
+                const rotate = Math.floor(Math.random() * 90) - 45; // -45 to +45 degrees
+
+                // Random size variation
+                const scale = 0.8 + Math.random() * 1.5;
+
+                span.style.top = `${top}px`;
+                span.style.left = `${left}px`;
+                span.style.transform = `rotate(${rotate}deg) scale(${scale})`;
+
+                layer.appendChild(span);
+            }
+        }
+
+        // Hook into your existing load event or call it directly
+        window.addEventListener('load', generateBackgroundQuotes);
+        document.body.addEventListener('click', generateBackgroundQuotes);
+    </script>
+</body>
+</html>
