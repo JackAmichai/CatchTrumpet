@@ -98,6 +98,63 @@
             transform: rotate(3deg);
         }
 
+        /* Audio Player */
+        .audio-player {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(245, 245, 220, 0.9);
+            padding: 5px 10px;
+            border: 2px solid #8b4513;
+            border-radius: 5px;
+        }
+
+        .audio-btn {
+            background: #8b4513;
+            color: #f5f5dc;
+            border: none;
+            padding: 5px 15px;
+            font-family: 'Special Elite', cursive;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+
+        .audio-btn:hover {
+            background: #5c4d3c;
+        }
+
+        .audio-btn.playing {
+            background: #c0392b;
+            animation: pulse 1s infinite;
+        }
+
+        .volume-slider {
+            width: 80px;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #8b4513;
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #c0392b;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
         /* UI Overlay */
         .ui-overlay {
             position: absolute;
@@ -345,7 +402,18 @@
             <div class="stamp classified">CLASSIFIED</div>
         </div>
 
-        <canvas id="gameCanvas" width="900" height="650"></canvas>
+        <!-- Audio Player for Bondi Testimony -->
+        <div class="audio-player" id="audioPlayer">
+            <button class="audio-btn" id="audioToggle">▶️ BONDI TESTIMONY</button>
+            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50">
+        </div>
+        <audio id="bondiAudio" loop>
+            <!-- Replace with actual Bondi testimony audio file -->
+            <source src="bondi_testimony.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+
+        <canvas id="gameCanvas" width="900" height="650" tabindex="0"></canvas>
         
         <div class="ui-overlay">
             <div>HIGH: <span id="highScore">0</span></div>
@@ -435,24 +503,44 @@
         // Update high score display
         document.getElementById('highScore').textContent = highScore;
 
-        // Word banks - Epstein theme
+        // Word banks - REAL Epstein Files content
+        // These are obstacles to AVOID
         const regularWords = [
-            "Flight Logs", "Little Black Book", "Private Island", "Palm Beach Mansion",
-            "Lolita Express", "Zorro Ranch", "New Mexico Estate", "St. James Island",
-            "Manhattan Townhouse", "Paris Apartment", "Gulfstream", "Boeing 727",
-            "Maxwell", "Ghislaine", "Recruiter", "Massage Table", "NDA Agreement",
-            "Settlement", "Legal Team", "Attorney", "Broker", "Accountant",
-            "Wire Transfer", "Offshore Account", "Shell Company", "Trust Fund",
-            "Birthday Book", "Contact List", "Appointment", "Calendar Entry"
+            "Flight Logs", "Little Black Book", "Contact List", "Flight Manifests",
+            "Lolita Express", "Private Jet", "Boeing 727", "Gulfstream",
+            "Little St James", "Zorro Ranch", "Palm Beach Mansion", "Manhattan Townhouse",
+            "Paris Apartment", "New Mexico Estate", "Virgin Islands", "St Thomas",
+            "Teterboro Airport", "Bangkok", "Brunei", "Africa Trip",
+            "Ghislaine Maxwell", "Sarah Kellen", "Lesley Groff", "Nadia Marcinkova",
+            "Emma Johnson", "Adriana Ross", "Lynn Miller", "Ghislaine",
+            "Recruitment", "Massage Schedule", "Massage Table", "Calendar Entry",
+            "Birthday Book", "NDA Agreement", "Settlement Documents", "Wire Transfer",
+            "Offshore Account", "Shell Company", "Trust Fund Setup", "Financial Ledger",
+            "Email Archive", "Phone Records", "Appointment Book", "Travel Itinerary",
+            "Visitor Log", "Security Camera", "Video Archive", "Evidence Room"
         ];
 
+        // These are the REDACTED names to COLLECT - Real perpetrators from Epstein files
         const redactedWords = [
-            "Epstein", "Clinton", "Trump", "Andrew", "Dershowitz", "Wexner",
-            "Brunel", "Jean-Luc", "Staley", "Barclays", "Victims Names",
-            "Client List", "Video Tapes", "Evidence", "Cover Up", "Conspiracy",
-            "Pedophile Ring", "Sex Trafficking", "Underage Girls", "Recruitment",
-            "Island Visits", "Flight Records", "Deleted Emails", "Encrypted Files",
-            "Compromised", "Blackmail", "Payoff", "Hush Money", "Silenced Witness"
+            "Prince Andrew", "Duke of York", "Bill Clinton", "Doug Band",
+            "Donald Trump", "Alan Dershowitz", "Harvard Professor",
+            "Les Wexner", "Victoria Secret", "CEO Billionaire",
+            "Jean-Luc Brunel", "Modeling Agent", "MC2 Models",
+            "Ehud Barak", "Former PM Israel", "Israeli Politician",
+            "Jes Staley", "Barclays Bank", "Wall Street Executive",
+            "Marvin Minsky", "MIT Professor", "AI Researcher",
+            "Lawrence Krauss", "Physicist Arizona", "University Professor",
+            "Glenn Dubin", "Hedge Fund Billionaire", "Highbridge Capital",
+            "Thomas Pritzker", "Hyatt Hotels", "Billionaire Family",
+            "Bill Richardson", "Governor New Mexico", "Politician",
+            "George Mitchell", "Senator Maine", "Diplomat",
+            "Prince Andrew Flight", "Clinton 26 Flights", "Air Force Two",
+            "Doe 36", "Doe 174", "Doe 107", "Unnamed VIP",
+            "Kevin Spacey", "Actor Hollywood", "Chris Tucker", "Comedian",
+            "David Copperfield", "Magician", "Naomi Campbell", "Model",
+            "Tony Blair", "Prime Minister UK", "Ehud Barak Visits",
+            "Client List Names", "Perpetrator Names", "Co-Conspirator",
+            "Sex Trafficking Ring", "Abuse Network", "Compromised VIPs"
         ];
 
         // Player (Magnifying glass)
@@ -537,6 +625,32 @@
         // Button event listeners
         document.getElementById('startBtn').addEventListener('click', startGame);
         document.getElementById('restartBtn').addEventListener('click', restartGame);
+
+        // Audio controls
+        const audio = document.getElementById('bondiAudio');
+        const audioBtn = document.getElementById('audioToggle');
+        const volumeSlider = document.getElementById('volumeSlider');
+        let audioPlaying = false;
+
+        audioBtn.addEventListener('click', () => {
+            if (audioPlaying) {
+                audio.pause();
+                audioBtn.textContent = '▶️ BONDI TESTIMONY';
+                audioBtn.classList.remove('playing');
+            } else {
+                audio.play().catch(e => {
+                    console.log('Audio play failed:', e);
+                    alert('Add bondi_testimony.mp3 file to play audio!');
+                });
+                audioBtn.textContent = '⏸️ BONDI TESTIMONY';
+                audioBtn.classList.add('playing');
+            }
+            audioPlaying = !audioPlaying;
+        });
+
+        volumeSlider.addEventListener('input', (e) => {
+            audio.volume = e.target.value / 100;
+        });
 
         // Spawn obstacles
         function spawnObstacle() {
