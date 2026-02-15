@@ -3,70 +3,692 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visual Authenticity Module</title>
-    <link rel="stylesheet" href="style.css">
+    <title>CATCH TRUMPET - Declassified</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Caveat&family=Reenie+Beanie&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --paper-color: #fdfbf7;
+            --ink-black: #2c3e50;
+            --ink-blue: #2980b9;
+            --stamp-red: #c0392b;
+            --stamp-blue: #2980b9;
+            --bg-color: #f0ebe3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f4f1ea;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            font-family: 'Courier New', Courier, monospace;
+            color: #333;
+            padding: 2rem;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        /* BACKGROUND QUOTES LAYER */
+        #quote-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-quote {
+            position: absolute;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            text-transform: uppercase;
+            opacity: 0.08;
+            color: #8b0000;
+            white-space: nowrap;
+            font-size: 14px;
+            transform-origin: center;
+            user-select: none;
+            mix-blend-mode: multiply;
+        }
+
+        .document-container {
+            width: 100%;
+            max-width: 850px;
+            padding: 3rem;
+            background-color: var(--paper-color);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08);
+            position: relative;
+            border: 1px solid #e0dcd5;
+            background-image: linear-gradient(to bottom, transparent 98%, rgba(0,0,0,0.03) 100%),
+                              url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+            z-index: 1;
+        }
+
+        /* Game Header */
+        .game-header {
+            border-bottom: 2px solid #000;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .header-col {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .score-board {
+            text-align: right;
+            font-family: 'VT323', monospace;
+            font-size: 1.5rem;
+        }
+
+        .score-board span {
+            display: block;
+            color: var(--stamp-red);
+        }
+
+        /* Stamps */
+        .stamp {
+            position: absolute;
+            font-family: 'Impact', 'Arial Black', sans-serif;
+            text-transform: uppercase;
+            font-weight: bold;
+            border: 4px solid;
+            padding: 0.5rem 1rem;
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 10;
+            user-select: none;
+            mix-blend-mode: multiply;
+        }
+
+        .top-secret {
+            color: var(--stamp-red);
+            border-color: var(--stamp-red);
+            font-size: 2rem;
+            top: 3rem;
+            right: 3rem;
+            transform: rotate(-15deg);
+        }
+
+        .evidence {
+            color: var(--stamp-blue);
+            border-color: var(--stamp-blue);
+            font-size: 1.2rem;
+            bottom: 5rem;
+            left: 4rem;
+            transform: rotate(8deg);
+            border-radius: 5px;
+        }
+
+        /* Coffee stain */
+        .coffee-stain {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 10px solid rgba(139, 69, 19, 0.1);
+            top: 40%;
+            right: 8%;
+            transform: rotate(30deg);
+            opacity: 0.4;
+            pointer-events: none;
+            filter: blur(2px);
+            background: radial-gradient(circle, transparent 60%, rgba(139, 69, 19, 0.05) 70%, rgba(139, 69, 19, 0.2) 100%);
+        }
+
+        h1 {
+            font-family: 'Impact', 'Arial Black', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 1rem;
+            color: var(--ink-black);
+        }
+
+        .subtitle {
+            font-family: 'Reenie Beanie', cursive;
+            font-size: 1.5rem;
+            color: var(--ink-blue);
+            margin-bottom: 2rem;
+        }
+
+        /* Instructions */
+        .instructions {
+            background-color: rgba(255, 255, 0, 0.1);
+            border: 1px dashed #999;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            font-family: 'Reenie Beanie', cursive;
+            font-size: 1.4rem;
+            color: var(--ink-blue);
+            transform: rotate(-1deg);
+        }
+
+        /* Log text container */
+        #log-text {
+            font-size: 15px;
+            line-height: 2.2;
+            text-align: justify;
+            white-space: pre-wrap;
+            min-height: 300px;
+        }
+
+        /* The Redacted Block */
+        .blackout {
+            background-color: #000;
+            color: #000;
+            padding: 2px 0;
+            margin: 0 1px;
+            border-radius: 1px;
+            display: inline;
+            box-decoration-break: clone;
+            -webkit-box-decoration-break: clone;
+            cursor: crosshair;
+            transition: all 0.3s ease;
+        }
+
+        .blackout:hover {
+            background-color: #333;
+        }
+
+        /* The Revealed Words */
+        .revealed {
+            background-color: transparent;
+            font-weight: 700;
+            padding: 0 3px;
+            text-decoration: underline dotted #999 1px;
+            color: var(--ink-black);
+            animation: revealPulse 0.5s ease;
+        }
+
+        @keyframes revealPulse {
+            0% { background-color: rgba(255, 255, 0, 0.5); }
+            100% { background-color: transparent; }
+        }
+
+        /* Found/Clicked State */
+        .found {
+            background-color: rgba(46, 204, 113, 0.2);
+            border-bottom: 2px solid #27ae60;
+            padding: 0 3px;
+            font-weight: bold;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            font-size: 11px;
+            border-top: 1px solid #000;
+            padding-top: 10px;
+            color: #444;
+        }
+
+        /* Grainy overlay */
+        .texture {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 99;
+        }
+
+        /* Game Over Screen */
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .game-over-content {
+            background: var(--paper-color);
+            padding: 3rem;
+            text-align: center;
+            border: 3px solid var(--stamp-red);
+            max-width: 500px;
+        }
+
+        .game-over h2 {
+            font-family: 'Impact', 'Arial Black', sans-serif;
+            font-size: 2.5rem;
+            color: var(--stamp-red);
+            margin-bottom: 1rem;
+        }
+
+        .final-score {
+            font-family: 'VT323', monospace;
+            font-size: 3rem;
+            color: var(--ink-black);
+            margin: 1rem 0;
+        }
+
+        .play-again {
+            background: var(--stamp-red);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-family: 'Impact', 'Arial Black', sans-serif;
+            font-size: 1.2rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            margin-top: 1rem;
+        }
+
+        .play-again:hover {
+            background: #a93226;
+        }
+
+        /* Start Screen */
+        .start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .start-content {
+            background: var(--paper-color);
+            padding: 3rem;
+            text-align: center;
+            border: 3px solid var(--stamp-blue);
+            max-width: 600px;
+            position: relative;
+        }
+
+        .start-content h1 {
+            font-size: 3rem;
+            color: var(--stamp-red);
+            margin-bottom: 1rem;
+        }
+
+        .start-content p {
+            font-family: 'Courier New', Courier, monospace;
+            margin: 1rem 0;
+            line-height: 1.6;
+        }
+
+        .start-btn {
+            background: var(--stamp-blue);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-family: 'Impact', 'Arial Black', sans-serif;
+            font-size: 1.2rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            margin-top: 1rem;
+        }
+
+        .start-btn:hover {
+            background: #2471a3;
+        }
+    </style>
 </head>
 <body>
-    <div class="document-container">
-        <!-- Fax Header -->
-        <div class="fax-header">
-            <span>Sent: 2023-10-27 14:32</span>
-            <span>From: UNKNOWN ORIGIN</span>
-            <span>Page 1 of 1</span>
-        </div>
+    <div class="texture"></div>
+    <div id="quote-layer"></div>
 
-        <!-- Stamps -->
+    <!-- Start Screen -->
+    <div class="start-screen" id="startScreen">
+        <div class="start-content">
+            <div class="stamp top-secret" style="position: relative; display: inline-block; margin-bottom: 1rem;">TOP SECRET</div>
+            <h1>CATCH TRUMPET</h1>
+            <p><strong>MISSION:</strong> Declassify the redacted documents by clicking on blacked-out words to reveal the truth.</p>
+            <p><strong>HOW TO PLAY:</strong></p>
+            <p style="text-align: left; padding-left: 2rem;">
+                • Click on <span style="background: #000; color: #000; padding: 0 5px;">REDACTED</span> words to reveal them<br>
+                • Score points for each word found<br>
+                • Find all hidden words before time runs out<br>
+                • Watch for the background quotes
+            </p>
+            <p class="subtitle" style="margin-top: 1rem;">The truth is out there... if you can catch it.</p>
+            <button class="start-btn" onclick="startGame()">BEGIN MISSION</button>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div class="game-over" id="gameOver">
+        <div class="game-over-content">
+            <div class="stamp evidence" style="position: relative; display: inline-block; margin-bottom: 1rem;">CASE CLOSED</div>
+            <h2 id="gameOverTitle">MISSION COMPLETE</h2>
+            <p>Words Found:</p>
+            <div class="final-score" id="finalScore">0</div>
+            <p id="gameOverMessage"></p>
+            <button class="play-again" onclick="resetGame()">NEW DOCUMENT</button>
+        </div>
+    </div>
+
+    <div class="document-container">
         <div class="stamp top-secret">TOP SECRET</div>
-        <div class="stamp evidence">EVIDENCE #42</div>
+        <div class="stamp evidence" id="evidenceStamp">EVIDENCE</div>
         <div class="coffee-stain"></div>
 
-        <h1>INTELLIGENCE REPORT</h1>
-
-        <!-- Typed Report -->
-        <div class="typed-report">
-            <p>SUBJECT: Project Chimera</p>
-            <p>DATE: October 27, 2023</p>
-            <p>
-                Surveillance indicates unusual activity in Sector 7. The target has been observed
-                moving large quantities of equipment during the night. We suspect they are
-                attempting to bypass security protocols. Recommend immediate investigation.
-            </p>
-            <p>
-                Initial analysis of the intercepted communications suggests a coordinated effort.
-                The encryption used is highly sophisticated, pointing to state-level involvement.
-            </p>
+        <div class="game-header">
+            <div class="header-col">
+                <span>UNITED STATES DISTRICT COURT</span>
+                <span>SOUTHERN DISTRICT OF NEW YORK</span>
+                <span>EXHIBIT NO: <span id="exhibit-id"></span></span>
+            </div>
+            <div class="header-col">
+                <span>DATE: <span id="doc-date"></span></span>
+                <span>STATUS: REDACTED</span>
+            </div>
+            <div class="score-board">
+                <span>WORDS: <span id="foundCount">0</span>/<span id="totalCount">0</span></span>
+                <span>SCORE: <span id="score">0</span></span>
+                <span>TIME: <span id="timer">60</span>s</span>
+            </div>
         </div>
 
-        <!-- Handwritten Note -->
-        <div class="handwritten-note">
-            Who authorized this?? Check the logs!
+        <h1>CLASSIFIED INTELLIGENCE REPORT</h1>
+        <div class="subtitle">Click the redacted words to reveal the truth...</div>
+
+        <div class="instructions">
+            <strong>HOW TO PLAY:</strong> Click on the blacked-out sections to reveal hidden words. Find as many as you can before time runs out!
         </div>
 
-        <div class="handwritten-note margin-note" style="top: 200px; right: -40px;">
-            Verify dates ASAP
+        <div id="log-text"></div>
+
+        <div class="footer">
+            CASE 1:19-cr-00490-RMB Document 22 Filed 07/08/19 | Click anywhere to regenerate document
         </div>
-
-        <!-- Flight Manifest -->
-        <h2>FLIGHT MANIFEST - CARGO 773</h2>
-        <div class="flight-manifest">
-FLIGHT ID:   CRG-773
-DEPARTURE:   0300 HRS
-DESTINATION: [REDACTED]
-
-ITEM NO   DESCRIPTION         WEIGHT    STATUS
-----------------------------------------------
-001-A     Component X-1       50kg      LOADED
-002-B     Bio-Sample 44       12kg      PENDING
-003-C     Encrypted Drive      1kg      SECURE
-        </div>
-
-        <div class="handwritten-note" style="transform: rotate(2deg); margin-left: 2rem;">
-            Is this accurate? - J
-        </div>
-
     </div>
+
+    <script>
+        // Game State
+        let score = 0;
+        let foundWords = 0;
+        let totalWords = 0;
+        let timeLeft = 60;
+        let gameInterval;
+        let isPlaying = false;
+
+        /* EXACT QUOTES FROM AG BONDI */
+        const terribleQuotes = [
+            "I WILL NOT GET IN THE GUTTER FOR HER THEATRICS.",
+            "YOU'RE A WASHED-UP, LOSER LAWYER.",
+            "THERE IS NO INCRIMINATING CLIENT LIST.",
+            "I AM NOT GOING TO HAVE IT.",
+            "YOU SIT HERE AND YOU ATTACK THE PRESIDENT.",
+            "THIS IS SO RIDICULOUS.",
+            "WE HAVE DONE OUR VERY BEST.",
+            "IT IS A LOW ERROR RATE.",
+            "IF A VICTIM'S NAME WAS UNREDACTED, BRING IT TO US.",
+            "I'M NOT GOING TO PUT UP WITH IT.",
+            "THAT IS A POLITICAL STUNT.",
+            "WE FOLLOWED THE LAW.",
+            "IT WAS PROCESSED VERY QUICKLY."
+        ];
+
+        /* EXTENDED WORD BANK */
+        const wordBank = [
+            "Island", "Estate", "Ranch", "Palm Beach", "New Mexico", "Zorro", "Paris",
+            "Manhattan", "Townhouse", "Mansion", "Lodge", "Cabin", "Harbor", "Port",
+            "Dock", "Hangar", "Studio", "Apartment", "Suite", "71st Street",
+            "Virgin Islands", "St. Thomas", "Little St. James", "Residence",
+            "Gulfstream", "Boeing", "727", "Helicopter", "Pilot", "Copilot", "Captain",
+            "Flight", "Log", "Manifest", "Departure", "Arrival", "Teterboro", "JFK",
+            "Fuel", "Maintenance", "Avionics", "Landing", "Takeoff", "Runway", "Taxi",
+            "Passenger", "Trip", "Route", "Altitude", "Weather", "Clearance",
+            "Customs", "Passport", "Visa", "Luggage", "Baggage", "Cargo",
+            "Trust", "Fund", "Foundation", "Bank", "Deutsche", "Morgan", "Chase",
+            "Wire", "Transfer", "Deposit", "Withdrawal", "Account", "Ledger", "Balance",
+            "Asset", "Liability", "Tax", "Invoice", "Receipt", "Check", "Cash",
+            "Currency", "Offshore", "Shell", "LLC", "Incorporated", "Partner",
+            "Agreement", "Contract", "NDA", "Settlement", "Lawyer", "Attorney",
+            "Counsel", "Judge", "Court", "Motion", "Filing", "Affidavit",
+            "Deposition", "Subpoena", "Audit", "Fee", "Retainer",
+            "Meeting", "Schedule", "Calendar", "Appointment", "Conference", "Call",
+            "Email", "Fax", "Letter", "Memo", "Note", "Message", "Regarding", "Re:",
+            "Subject", "Attachment", "File", "Document", "Copy", "Original", "Draft",
+            "Review", "Approve", "Sign", "Signature", "Notary", "Secretary",
+            "Assistant", "Manager", "Director", "Staff", "Employee", "Recruit",
+            "Interview", "Resume", "Referral", "Introduction", "Dinner", "Lunch",
+            "Invitation", "Guest", "Visitor", "Client",
+            "Massage", "Table", "Room", "Door", "Gate", "Key", "Code", "Access",
+            "Security", "Camera", "Tape", "Video", "Photo", "Computer", "Server",
+            "Phone", "Mobile", "Laptop", "Drive", "Disk", "Painting", "Art",
+            "Sculpture", "Furniture", "Rug", "Curtain", "Design", "Renovation",
+            "Construction", "Architect", "Builder", "Plan", "Blueprint"
+        ];
+
+        const fillerChars = "abcdefghijklmnopqrstuvwxyz1234567890";
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateHeaderData() {
+            document.getElementById('exhibit-id').innerText =
+                `GX-${getRandomInt(100, 999)}-${String.fromCharCode(65+getRandomInt(0,25))}`;
+
+            const year = getRandomInt(2002, 2018);
+            const month = getRandomInt(1, 12).toString().padStart(2, '0');
+            const day = getRandomInt(1, 28).toString().padStart(2, '0');
+            document.getElementById('doc-date').innerText = `${month}/${day}/${year}`;
+
+            document.getElementById('evidenceStamp').innerText = `EVIDENCE #${getRandomInt(1, 999)}`;
+        }
+
+        function generateGibberish(length) {
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += fillerChars.charAt(Math.floor(Math.random() * fillerChars.length));
+            }
+            return result;
+        }
+
+        function generateBackgroundQuotes() {
+            const layer = document.getElementById('quote-layer');
+            layer.innerHTML = '';
+
+            const numberOfQuotes = 15;
+            const pageHeight = window.innerHeight;
+            const pageWidth = window.innerWidth;
+
+            for (let i = 0; i < numberOfQuotes; i++) {
+                const span = document.createElement('span');
+                span.classList.add('bg-quote');
+                span.innerText = terribleQuotes[Math.floor(Math.random() * terribleQuotes.length)];
+
+                const top = Math.floor(Math.random() * pageHeight);
+                const left = Math.floor(Math.random() * (pageWidth - 200));
+                const rotate = Math.floor(Math.random() * 90) - 45;
+                const scale = 0.8 + Math.random() * 1.5;
+
+                span.style.top = `${top}px`;
+                span.style.left = `${left}px`;
+                span.style.transform = `rotate(${rotate}deg) scale(${scale})`;
+
+                layer.appendChild(span);
+            }
+        }
+
+        function createRedactedText() {
+            const container = document.getElementById('log-text');
+            container.innerHTML = '';
+
+            const wordCount = getRandomInt(80, 120);
+            totalWords = 0;
+            foundWords = 0;
+
+            // Generate paragraphs
+            let wordsInParagraph = 0;
+            let paragraph = document.createElement('p');
+            paragraph.style.marginBottom = '1rem';
+
+            for (let i = 0; i < wordCount; i++) {
+                const isRevealed = Math.random() < 0.15; // 15% chance to be clickable
+
+                if (isRevealed) {
+                    totalWords++;
+                    const word = wordBank[Math.floor(Math.random() * wordBank.length)];
+                    const span = document.createElement('span');
+                    span.classList.add('blackout');
+                    span.dataset.word = word;
+                    span.dataset.found = 'false';
+                    span.innerText = generateGibberish(word.length);
+                    span.onclick = function(e) {
+                        e.stopPropagation();
+                        revealWord(this);
+                    };
+                    paragraph.appendChild(span);
+                    paragraph.appendChild(document.createTextNode(' '));
+                } else {
+                    const blockLen = getRandomInt(3, 11);
+                    const junk = generateGibberish(blockLen);
+                    const span = document.createElement('span');
+                    span.classList.add('blackout');
+                    span.style.cursor = 'default';
+                    span.innerText = junk;
+                    paragraph.appendChild(span);
+                    paragraph.appendChild(document.createTextNode(' '));
+                }
+
+                wordsInParagraph++;
+
+                // New paragraph every 15-25 words
+                if (wordsInParagraph >= getRandomInt(15, 25)) {
+                    container.appendChild(paragraph);
+                    paragraph = document.createElement('p');
+                    paragraph.style.marginBottom = '1rem';
+                    wordsInParagraph = 0;
+                }
+            }
+
+            // Append last paragraph
+            if (wordsInParagraph > 0) {
+                container.appendChild(paragraph);
+            }
+
+            updateScoreBoard();
+        }
+
+        function revealWord(element) {
+            if (element.dataset.found === 'true' || !isPlaying) return;
+
+            const word = element.dataset.word;
+            element.innerText = word;
+            element.classList.remove('blackout');
+            element.classList.add('found');
+            element.dataset.found = 'true';
+
+            foundWords++;
+            score += 10;
+            updateScoreBoard();
+
+            // Check if all words found
+            if (foundWords >= totalWords) {
+                endGame(true);
+            }
+        }
+
+        function updateScoreBoard() {
+            document.getElementById('foundCount').innerText = foundWords;
+            document.getElementById('totalCount').innerText = totalWords;
+            document.getElementById('score').innerText = score;
+            document.getElementById('timer').innerText = timeLeft;
+        }
+
+        function startTimer() {
+            gameInterval = setInterval(() => {
+                timeLeft--;
+                updateScoreBoard();
+
+                if (timeLeft <= 0) {
+                    endGame(false);
+                }
+            }, 1000);
+        }
+
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            isPlaying = true;
+            score = 0;
+            foundWords = 0;
+            timeLeft = 60;
+
+            generateHeaderData();
+            createRedactedText();
+            generateBackgroundQuotes();
+            startTimer();
+        }
+
+        function endGame(won) {
+            isPlaying = false;
+            clearInterval(gameInterval);
+
+            const gameOverScreen = document.getElementById('gameOver');
+            const title = document.getElementById('gameOverTitle');
+            const message = document.getElementById('gameOverMessage');
+
+            if (won) {
+                title.innerText = 'MISSION ACCOMPLISHED';
+                title.style.color = '#27ae60';
+                message.innerText = `Excellent work! You declassified the entire document with ${timeLeft} seconds to spare!`;
+            } else {
+                title.innerText = 'MISSION FAILED';
+                title.style.color = '#c0392b';
+                message.innerText = `Time's up! You found ${foundWords} out of ${totalWords} hidden words.`;
+            }
+
+            document.getElementById('finalScore').innerText = score;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        function resetGame() {
+            document.getElementById('gameOver').style.display = 'none';
+            isPlaying = true;
+            score = 0;
+            foundWords = 0;
+            timeLeft = 60;
+
+            generateHeaderData();
+            createRedactedText();
+            generateBackgroundQuotes();
+            startTimer();
+        }
+
+        // Click outside to regenerate (only when not playing)
+        document.body.addEventListener('click', (e) => {
+            if (!isPlaying && e.target === document.body) {
+                generateBackgroundQuotes();
+            }
+        });
+
+        // Initial background quotes
+        generateBackgroundQuotes();
+    </script>
 </body>
 </html>
