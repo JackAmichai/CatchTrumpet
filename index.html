@@ -504,57 +504,55 @@
         // Update high score display
         document.getElementById('highScore').textContent = highScore;
 
-        // Word banks - REAL Epstein Files content
-        // These are obstacles to AVOID
+        // Word banks - REAL Epstein Files content - CLEAN DATA
+        // These are obstacles to AVOID - Document/Locational info
         const regularWords = [
-            "Flight Logs", "Little Black Book", "Contact List", "Flight Manifests",
-            "Lolita Express", "Private Jet", "Boeing 727", "Gulfstream",
-            "Little St James", "Zorro Ranch", "Palm Beach Mansion", "Manhattan Townhouse",
-            "Paris Apartment", "New Mexico Estate", "Virgin Islands", "St Thomas",
-            "Teterboro Airport", "Bangkok", "Brunei", "Africa Trip",
-            "Ghislaine Maxwell", "Sarah Kellen", "Lesley Groff", "Nadia Marcinkova",
-            "Emma Johnson", "Adriana Ross", "Lynn Miller", "Ghislaine",
-            "Recruitment", "Massage Schedule", "Massage Table", "Calendar Entry",
-            "Birthday Book", "NDA Agreement", "Settlement Documents", "Wire Transfer",
-            "Offshore Account", "Shell Company", "Trust Fund Setup", "Financial Ledger",
-            "Email Archive", "Phone Records", "Appointment Book", "Travel Itinerary",
-            "Visitor Log", "Security Camera", "Video Archive", "Evidence Room"
+            "FLIGHT LOG", "BLACK BOOK", "CONTACT LIST", "FLIGHT MANIFEST",
+            "LOLITA EXPRESS", "PRIVATE JET", "BOEING 727", "GULFSTREAM",
+            "LITTLE ST JAMES", "ZORRO RANCH", "PALM BEACH", "MANHATTAN",
+            "PARIS", "NEW MEXICO", "VIRGIN ISLES", "ST THOMAS",
+            "TETERBORO", "BANGKOK", "BRUNEI", "AFRICA",
+            "GHISLAINE", "SARAH KELLEN", "LESLEY GROFF", "NADIA",
+            "EMMA JOHNSON", "ADRIANA ROSS", "LYNN MILLER", "RECRUITMENT",
+            "MASSAGE", "CALENDAR", "BIRTHDAY BOOK", "NDA",
+            "SETTLEMENT", "WIRE TRANSFER", "OFFSHORE", "SHELL COMPANY",
+            "TRUST FUND", "LEDGER", "EMAIL ARCHIVE", "PHONE RECORDS",
+            "VISITOR LOG", "SECURITY CAM", "VIDEO TAPE", "EVIDENCE"
         ];
 
-        // These are the REDACTED names to COLLECT - Real perpetrators from Epstein files
+        // These are the REDACTED NAMES to COLLECT - REAL names from Epstein files
         const redactedWords = [
-            "Prince Andrew", "Duke of York", "Bill Clinton", "Doug Band",
-            "Donald Trump", "Alan Dershowitz", "Harvard Professor",
-            "Les Wexner", "Victoria Secret", "CEO Billionaire",
-            "Jean-Luc Brunel", "Modeling Agent", "MC2 Models",
-            "Ehud Barak", "Former PM Israel", "Israeli Politician",
-            "Jes Staley", "Barclays Bank", "Wall Street Executive",
-            "Marvin Minsky", "MIT Professor", "AI Researcher",
-            "Lawrence Krauss", "Physicist Arizona", "University Professor",
-            "Glenn Dubin", "Hedge Fund Billionaire", "Highbridge Capital",
-            "Thomas Pritzker", "Hyatt Hotels", "Billionaire Family",
-            "Bill Richardson", "Governor New Mexico", "Politician",
-            "George Mitchell", "Senator Maine", "Diplomat",
-            "Prince Andrew Flight", "Clinton 26 Flights", "Air Force Two",
-            "Doe 36", "Doe 174", "Doe 107", "Unnamed VIP",
-            "Kevin Spacey", "Actor Hollywood", "Chris Tucker", "Comedian",
-            "David Copperfield", "Magician", "Naomi Campbell", "Model",
-            "Tony Blair", "Prime Minister UK", "Ehud Barak Visits",
-            "Client List Names", "Perpetrator Names", "Co-Conspirator",
-            "Sex Trafficking Ring", "Abuse Network", "Compromised VIPs"
+            "PRINCE ANDREW", "DUKE OF YORK", "BILL CLINTON", "DOUG BAND",
+            "DONALD TRUMP", "ALAN DERSHOWITZ", "HARVARD LAWYER",
+            "LES WEXNER", "VICTORIA SECRET", "RETAIL CEO",
+            "JEAN-LUC BRUNEL", "MODELING AGENT", "MC2 AGENCY",
+            "EHUD BARAK", "ISRAELI PM", "EX PM ISRAEL",
+            "JES STALEY", "BARCLAYS", "BANK EXEC",
+            "MARVIN MINSKY", "MIT PROF", "AI PIONEER",
+            "LAWRENCE KRAUSS", "PHYSICIST", "ARIZONA PROF",
+            "GLENN DUBIN", "HEDGE FUND", "HIGHBRIDGE",
+            "THOMAS PRITZKER", "HYATT HOTELS", "PRITZKER FAM",
+            "BILL RICHARDSON", "GOV NEW MEX", "EX GOV",
+            "GEORGE MITCHELL", "SENATOR MAINE", "DIPLOMAT",
+            "CLINTON FLIGHTS", "AIR FORCE TWO", "26 FLIGHTS",
+            "KEVIN SPACEY", "ACTOR", "CHRIS TUCKER", "COMEDIAN",
+            "DAVID COPPERFIELD", "MAGICIAN", "NAOMI CAMPBELL", "MODEL",
+            "TONY BLAIR", "UK PM", "BRITISH PM",
+            "CLIENT LIST", "PERPETRATOR", "CO-CONSPIRATOR"
         ];
 
-        // Player (Magnifying glass)
+        // Player (Magnifying glass) - BIGGER AND MORE VISIBLE
         const player = {
             x: 120,
             y: 325,
-            width: 50,
-            height: 50,
+            width: 70,
+            height: 70,
             velocity: 0,
-            gravity: 0.4,
-            jumpStrength: -8,
+            gravity: 0.45,
+            jumpStrength: -9,
             rotation: 0,
-            emoji: '🔍'
+            emoji: '🔍',
+            glow: true
         };
 
         // Trump boss
@@ -661,31 +659,33 @@
             audio.volume = e.target.value / 100;
         });
 
-        // Spawn obstacles
+        // Spawn obstacles - BIGGER and MORE CENTERED
         function spawnObstacle() {
             const word = regularWords[Math.floor(Math.random() * regularWords.length)];
-            const y = 80 + Math.random() * (canvas.height - 200);
+            // More centered spawn area
+            const y = 120 + Math.random() * (canvas.height - 300);
             
             obstacles.push({
                 x: canvas.width + 50,
                 y: y,
                 word: word,
-                width: ctx.measureText(word).width + 30,
-                height: 35,
+                width: 140,
+                height: 40,
                 passed: false
             });
         }
 
-        // Spawn redacted items with REAL NAMES to reveal
+        // Spawn redacted items - BIGGER and MORE CENTERED
         function spawnRedacted() {
-            const y = 80 + Math.random() * (canvas.height - 200);
+            // More centered spawn area
+            const y = 120 + Math.random() * (canvas.height - 300);
             const word = redactedWords[Math.floor(Math.random() * redactedWords.length)];
             
             redactedItems.push({
                 x: canvas.width + 50,
                 y: y,
-                width: 120,
-                height: 25,
+                width: 160,
+                height: 35,
                 word: word,
                 collected: false,
                 exploding: false,
@@ -809,10 +809,10 @@
             });
 
             // Spawn obstacles and redacted
-            if (!trumpActive && frameCount % 100 === 0) {
+            if (!trumpActive && frameCount % 80 === 0) {
                 if (Math.random() < 0.6) spawnObstacle();
             }
-            if (!trumpActive && frameCount % 140 === 0) {
+            if (!trumpActive && frameCount % 100 === 0) {
                 spawnRedacted();
             }
 
@@ -1101,14 +1101,45 @@
                     ctx.stroke();
                 }
 
-                // Draw player (Magnifying glass)
+                // Draw player (Magnifying glass) - BIGGER AND GLOWING
                 ctx.save();
                 ctx.translate(player.x + player.width/2, player.y + player.height/2);
                 ctx.rotate(player.rotation);
-                ctx.font = '45px Arial';
+                
+                // Glow effect behind player
+                ctx.shadowColor = '#f39c12';
+                ctx.shadowBlur = 25;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // Draw larger magnifying glass
+                ctx.font = '55px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(player.emoji, 0, 0);
+                
+                // White glow circle behind
+                ctx.beginPath();
+                ctx.arc(0, 0, 35, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.fill();
+                
+                // The magnifying glass emoji
+                ctx.fillText('🔍', 0, 2);
+                ctx.shadowBlur = 0;
+                
+                // Bright border ring
+                ctx.beginPath();
+                ctx.arc(0, 0, 38, 0, Math.PI * 2);
+                ctx.strokeStyle = '#f39c12';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                
+                // Add sparkle effect
+                ctx.fillStyle = '#fff';
+                ctx.font = '16px Arial';
+                ctx.fillText('✦', 25, -25);
+                ctx.fillText('✦', -28, 20);
+                
                 ctx.restore();
 
                 // Draw particles
