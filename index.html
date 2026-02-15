@@ -339,6 +339,23 @@
             box-shadow: 0 0 0 #3d3429;
         }
 
+        .music-options {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .music-options .audio-btn {
+            margin-top: 10px;
+        }
+
+        .music-options #musicInputContainer {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
         .final-score {
             font-family: 'Special Elite', cursive;
             font-size: 48px;
@@ -521,9 +538,18 @@
         </div>
         <audio id="bondiAudio" loop>
             <!-- Replace with actual Bondi testimony audio file -->
-            <source src="bondi_testimony.mp3" type="audio/mpeg">
+            <source src="bondi_address_congress.mp3" type="audio/mpeg">
             Your browser does not support the audio element.
         </audio>
+
+        <audio id="jumpSound" src="jump.mp3" preload="auto"></audio>
+        <audio id="collectSound" src="collect.mp3" preload="auto"></audio>
+        <audio id="hitSound" src="hit.mp3" preload="auto"></audio>
+        <audio id="powerupSound" src="powerup.mp3" preload="auto"></audio>
+        <audio id="debuffSound" src="debuff.mp3" preload="auto"></audio>
+        <audio id="trumpAppearSound" src="trump_appear.mp3" preload="auto"></audio>
+        <audio id="trumpPassSound" src="trump_pass.mp3" preload="auto"></audio>
+        <audio id="gameOverSound" src="game_over.mp3" preload="auto"></audio>
 
         <canvas id="gameCanvas" width="900" height="650" tabindex="0"></canvas>
         
@@ -580,6 +606,38 @@
             </div>
             
             <button class="btn" id="startBtn">START MISSION</button>
+
+            <div class="difficulty-settings" style="margin-top: 20px; text-align: center; width: 80%;">
+                <h3 style="font-family: 'Special Elite', cursive; color: #8b4513; margin-bottom: 10px;">DIFFICULTY SETTINGS</h3>
+                
+                <div style="display: flex; justify-content: space-around; width: 100%;">
+                    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 15px;">
+                        <label for="initialSpeedSlider" style="font-family: 'Courier Prime', monospace; font-size: 14px; color: #3d3429;">Initial Speed: <span id="currentInitialSpeed">1.5</span></label>
+                        <input type="range" id="initialSpeedSlider" min="0.5" max="4" value="1.5" step="0.1" style="width: 150px;">
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 15px;">
+                        <label for="effectDurationSlider" style="font-family: 'Courier Prime', monospace; font-size: 14px; color: #3d3429;">Effect Duration (s): <span id="currentEffectDuration">5</span></label>
+                        <input type="range" id="effectDurationSlider" min="1" max="10" value="5" step="0.5" style="width: 150px;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-customization" style="margin-top: 15px; text-align: center;">
+                <h3 style="font-family: 'Special Elite', cursive; color: #8b4513; margin-bottom: 10px;">YOUR LENS</h3>
+                <button class="audio-btn" id="prevPlayerEmojiBtn" style="margin-right: 10px;">◀️</button>
+                <span id="currentPlayerEmoji" style="font-size: 30px;">🔍</span>
+                <button class="audio-btn" id="nextPlayerEmojiBtn" style="margin-left: 10px;">▶️</button>
+            </div>
+
+            <div class="music-options">
+                <button class="audio-btn" id="musicOptionsBtn">MUSIC OPTIONS</button>
+                <div id="musicInputContainer" class="hidden">
+                    <input type="text" id="musicUrlInput" placeholder="Enter MP3 URL..." style="width: 250px; padding: 5px; margin-top: 10px; background: rgba(245, 245, 220, 0.8); border: 1px solid #8b4513;">
+                    <button class="audio-btn" id="loadMusicBtn" style="margin-left: 5px;">LOAD</button>
+                    <span id="musicLoadStatus" style="color: #c0392b; margin-left: 10px; font-size: 12px;"></span>
+                </div>
+            </div>
         </div>
 
         <!-- Game Over Screen -->
@@ -602,17 +660,99 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // Game state
-        let gameState = 'start';
-        let score = 0;
-        let highScore = localStorage.getItem('epsteinFilesHighScore') || 0;
-        let filesCollected = 0;
-        let trumpEncounters = 0;
-        let frameCount = 0;
-        let gameSpeed = 2.5;
-        let trumpActive = false;
-        let trumpTimer = 0;
-        
+                // Game state
+                let gameState = 'start';
+                let score = 0;
+                let highScore = localStorage.getItem('epsteinFilesHighScore') || 0;
+                let filesCollected = 0;
+                let trumpEncounters = 0;
+                let frameCount = 0;
+                        let gameSpeed = 2.5; // Will be set by initialGameSpeed in startGame
+                        let trumpActive = false;
+                        let comboCount = 0; // New: Tracks current combo streak
+                        let comboTimer = 0; // New: Timer to reset combo if no new collection
+                                let isBossRush = false; // New: Flag for Boss Rush mode
+                                let totalFilesDeclassified = parseInt(localStorage.getItem('epsteinFilesTotalDeclassified') || '0');
+                                let longestComboStreak = parseInt(localStorage.getItem('epsteinFilesLongestComboStreak') || '0');
+                                let totalPlaytime = parseInt(localStorage.getItem('epsteinFilesTotalPlaytime') || '0');
+                                let sessionStartTime = 0; // To track playtime per session
+                                
+                                // Player constants                        const baseJumpStrength = -9;
+                        const COMBO_MAX_DELAY = 90; // frames (1.5 seconds at 60fps) to maintain combo
+                
+                        // Player customization
+                        const PLAYER_EMOJIS = ['🔍', '🔎', '🕵️‍♀️', '💡'];
+                        let selectedPlayerEmojiIndex = 0;
+                        
+                        // Difficulty scaling parameters        let initialGameSpeed = 1.5;
+        const gameSpeedIncreasePerFile = 0.05; // Smaller, more frequent increases
+        let obstacleSpawnFrequency = 80; // Smaller value means more frequent
+        let redactedSpawnFrequency = 100; // Smaller value means more frequent
+        const spawnFrequencyDecreasePerScore = 0.05; // Decrease interval by this much per score point
+        const maxObstacleSpawnFrequency = 30; // Minimum interval
+        const maxRedactedSpawnFrequency = 40; // Minimum interval
+        const trumpSpeedBase = 4;
+        const trumpSpeedIncreaseFactor = 0.2; // How much faster Trump gets per encounter
+        const trumpTrackingBase = 0.08;
+        const trumpTrackingIncreaseFactor = 0.01; // How much more aggressive Trump's tracking gets
+
+        const BOSS_RUSH_THRESHOLD = 5; // Number of Trump encounters to trigger Boss Rush
+
+        // Power-up and Debuff definitions
+        let currentEffectDurationFrames = 300; // frames (approx 5 seconds at 60fps)
+
+        const POWERUP_TYPES = {
+            SLOW_MOTION: { emoji: '⏳', duration: currentEffectDurationFrames, effect: { gameSpeedMultiplier: 0.5 } },
+            SHIELD: { emoji: '🛡️', duration: currentEffectDurationFrames, effect: { invulnerable: true } },
+            MAGNET: { emoji: '🧲', duration: currentEffectDurationFrames, effect: { collectionRadius: 1.5 } }
+        };
+
+        const DEBUFF_TYPES = {
+            REVERSE_CONTROLS: { emoji: '🔄', duration: currentEffectDurationFrames, effect: { reverseJump: true } },
+            WEAK_JUMP: { emoji: '⬇️', duration: currentEffectDurationFrames, effect: { jumpStrengthMultiplier: 0.5 } },
+            BLURRED_VISION: { emoji: '😵', duration: currentEffectDurationFrames, effect: { blur: true } },
+            COMBO_BREAKER: { emoji: '💔', duration: 1, effect: { comboBreak: true } } // Instant effect
+        };
+
+        // Get difficulty elements
+        const initialSpeedSlider = document.getElementById('initialSpeedSlider');
+        const currentInitialSpeedSpan = document.getElementById('currentInitialSpeed');
+        const effectDurationSlider = document.getElementById('effectDurationSlider');
+        const currentEffectDurationSpan = document.getElementById('currentEffectDuration');
+
+        // Update displayed values and game variables when sliders are moved
+        initialSpeedSlider.addEventListener('input', (e) => {
+            initialGameSpeed = parseFloat(e.target.value);
+            currentInitialSpeedSpan.textContent = initialGameSpeed.toFixed(1);
+        });
+
+        effectDurationSlider.addEventListener('input', (e) => {
+            currentEffectDurationFrames = parseFloat(e.target.value) * 60; // Convert seconds to frames
+            currentEffectDurationSpan.textContent = parseFloat(e.target.value);
+            // Update POWERUP_TYPES and DEBUFF_TYPES with new duration
+            for (const key in POWERUP_TYPES) {
+                POWERUP_TYPES[key].duration = currentEffectDurationFrames;
+            }
+            for (const key in DEBUFF_TYPES) {
+                DEBUFF_TYPES[key].duration = currentEffectDurationFrames;
+            }
+        });
+
+        // Player emoji customization
+        const prevPlayerEmojiBtn = document.getElementById('prevPlayerEmojiBtn');
+        const nextPlayerEmojiBtn = document.getElementById('nextPlayerEmojiBtn');
+        const currentPlayerEmojiSpan = document.getElementById('currentPlayerEmoji');
+
+        prevPlayerEmojiBtn.addEventListener('click', () => {
+            selectedPlayerEmojiIndex = (selectedPlayerEmojiIndex - 1 + PLAYER_EMOJIS.length) % PLAYER_EMOJIS.length;
+            currentPlayerEmojiSpan.textContent = PLAYER_EMOJIS[selectedPlayerEmojiIndex];
+        });
+
+        nextPlayerEmojiBtn.addEventListener('click', () => {
+            selectedPlayerEmojiIndex = (selectedPlayerEmojiIndex + 1) % PLAYER_EMOJIS.length;
+            currentPlayerEmojiSpan.textContent = PLAYER_EMOJIS[selectedPlayerEmojiIndex];
+        });
+
         // Update high score display
         document.getElementById('highScore').textContent = highScore;
 
@@ -629,46 +769,67 @@
             "MASSAGE TABLE", "CALENDAR", "BIRTHDAY BOOK", "NDA",
             "SETTLEMENT", "WIRE TRANSFER", "OFFSHORE ACCOUNT", "SHELL COMPANY",
             "TRUST FUND", "FINANCIAL LEDGER", "EMAIL ARCHIVE", "PHONE RECORDS",
-            "VISITOR LOG", "SECURITY FOOTAGE", "VIDEO TAPES", "EVIDENCE"
+            "VISITOR LOG", "SECURITY FOOTAGE", "VIDEO TAPES", "EVIDENCE",
+            // New emoji obstacles
+            "🚫", "⛔️", "⚠️", "❌", "🛑", "🚨", "🤯", "🗑️"
         ];
 
         // REDACTED NAMES - 100% VERIFIED from actual Epstein court files
         const redactedWords = [
-            // ROYALTY & POLITICIANS (verified in flight logs & court docs)
-            "PRINCE ANDREW", "DUKE OF YORK", "BILL CLINTON", "DOUG BAND",
-            //OTHERS (not fully verified - marked with caution)
-            "ALAN DERSHOWITZ", "HARVARD LAWYER", 
-            "LES WEXNER", "VICTORIA'S SECRET CEO",
-            "JEAN-LUC BRUNEL", "MODELING SCOUT", "MC2 MODELS",
-            // BUSINESS & FINANCE
-            "JES STALEY", "BARCLAYS CEO", "BANK EXECUTIVE",
-            // NOTABLE NAMES FROM FLIGHT LOGS (verified)
-            "GLENN DUBIN", "HEDGE FUND MANAGER", "HIGHBRIDGE CAPITAL",
-            "THOMAS PRITZKER", "HYATT CHAIRMAN", "PRITZKER FAMILY",
-            "BILL RICHARDSON", "NEW MEXICO GOV", "EX GOV",
-            "GEORGE MITCHELL", "SENATOR", "MAINE DIPLOMAT",
-            // ENTERTAINMENT (some rumored, some in docs)
-            "KEVIN SPACEY", "ACTOR", "CHRIS TUCKER", "COMEDIAN",
-            "DAVID COPPERFIELD", "MAGICIAN", "NAOMI CAMPBELL", "SUPERMODEL",
-            // INTERNATIONAL
-            "TONY BLAIR", "UK PRIME MINISTER", "BRITISH PM",
-            // COURT TERMS
-            "CLIENT LIST", "CO-CONSPIRATOR", "PERPETRATOR"
+            { word: "PRINCE ANDREW", rarity: "rare" }, { word: "DUKE OF YORK", rarity: "common" },
+            { word: "BILL CLINTON", rarity: "rare" }, { word: "DOUG BAND", rarity: "common" },
+            { word: "ALAN DERSHOWITZ", rarity: "rare" }, { word: "HARVARD LAWYER", rarity: "common" }, 
+            { word: "LES WEXNER", rarity: "rare" }, { word: "VICTORIA'S SECRET CEO", rarity: "common" },
+            { word: "JEAN-LUC BRUNEL", rarity: "rare" }, { word: "MODELING SCOUT", rarity: "common" },
+            { word: "MC2 MODELS", rarity: "common" },
+            { word: "JES STALEY", rarity: "rare" }, { word: "BARCLAYS CEO", rarity: "common" },
+            { word: "BANK EXECUTIVE", rarity: "common" },
+            { word: "GLENN DUBIN", rarity: "rare" }, { word: "HEDGE FUND MANAGER", rarity: "common" },
+            { word: "HIGHBRIDGE CAPITAL", rarity: "common" },
+            { word: "THOMAS PRITZKER", rarity: "rare" }, { word: "HYATT CHAIRMAN", rarity: "common" },
+            { word: "PRITZKER FAMILY", rarity: "common" },
+            { word: "BILL RICHARDSON", rarity: "rare" }, { word: "NEW MEXICO GOV", rarity: "common" },
+            { word: "EX GOV", rarity: "common" },
+            { word: "GEORGE MITCHELL", rarity: "rare" }, { word: "SENATOR", rarity: "common" },
+            { word: "MAINE DIPLOMAT", rarity: "common" },
+            { word: "KEVIN SPACEY", rarity: "rare" }, { word: "ACTOR", rarity: "common" },
+            { word: "CHRIS TUCKER", rarity: "common" }, { word: "COMEDIAN", rarity: "common" },
+            { word: "DAVID COPPERFIELD", rarity: "rare" }, { word: "MAGICIAN", rarity: "common" },
+            { word: "NAOMI CAMPBELL", rarity: "rare" }, { word: "SUPERMODEL", rarity: "common" },
+            { word: "TONY BLAIR", rarity: "rare" }, { word: "UK PRIME MINISTER", rarity: "common" },
+            { word: "BRITISH PM", rarity: "common" },
+            { word: "CLIENT LIST", rarity: "common" }, { word: "CO-CONSPIRATOR", rarity: "common" },
+            { word: "PERPETRATOR", rarity: "common" },
+            // Epic Redactions - very rare, high score/power-up potential
+            { word: "EPSTEIN FLIGHT MANIFEST (FULL)", rarity: "epic", givesPowerup: "SHIELD" },
+            { word: "LITTLE BLACK BOOK (COMPLETE)", rarity: "epic", givesPowerup: "MAGNET" }
         ];
 
-        // Player (Magnifying glass) - BIGGER AND MORE VISIBLE
-        const player = {
-            x: 120,
-            y: 325,
-            width: 70,
-            height: 70,
-            velocity: 0,
-            gravity: 0.45,
-            jumpStrength: -9,
-            rotation: 0,
-            emoji: '🔍',
-            glow: true
-        };
+                // Player (Magnifying glass) - BIGGER AND MORE VISIBLE
+
+                const player = {
+
+                    x: 120,
+
+                    y: 325,
+
+                    width: 70,
+
+                    height: 70,
+
+                    velocity: 0,
+
+                    gravity: 0.45,
+
+                    jumpStrength: -9,
+
+                    rotation: 0,
+
+                    invulnerable: false, // New: for shield power-up
+
+                    collectionRadiusMultiplier: 1 // New: for magnet power-up
+
+                };
 
         // Trump boss - SMALLER and attacks
         const trump = {
@@ -677,7 +838,10 @@
             width: 70,
             height: 90,
             speed: 4,
-            active: false
+            active: false,
+            pattern: 'straight', // New: stores current movement pattern
+            initialY: 0, // New: for wave/dive patterns
+            wavePhase: 0 // New: for wave pattern
         };
 
         // Game objects
@@ -685,6 +849,8 @@
         let redactedItems = [];
         let particles = [];
         let documents = [];
+        let effects = []; // New: Stores spawned power-up/debuff items
+        let activeEffects = []; // New: Stores currently active power-ups/debuffs
 
         // Initialize background documents - AUTHENTIC FBI/DOJ FILES
         const caseNumbers = [
@@ -703,7 +869,10 @@
                 caseNumber: caseNumbers[Math.floor(Math.random() * caseNumbers.length)],
                 docType: Math.random() > 0.5 ? 'FLIGHT LOG' : 'CASE FILE',
                 hasRedactions: Math.random() > 0.3,
-                redactionCount: Math.floor(Math.random() * 5) + 1
+                redactionCount: Math.floor(Math.random() * 5) + 1,
+                rotationAngle: Math.random() * Math.PI * 2, // Initial random rotation
+                rotationSpeed: (Math.random() - 0.5) * 0.0005, // Slow, random rotation speed
+                skewAmount: (Math.random() - 0.5) * 0.02 // Subtle random skew
             });
         }
 
@@ -717,6 +886,7 @@
             if (gameState === 'playing' && !spacePressed) {
                 spacePressed = true;
                 player.velocity = player.jumpStrength;
+                playSound(document.getElementById('jumpSound')); // Play jump sound
             }
         }
 
@@ -773,37 +943,179 @@
             audio.volume = e.target.value / 100;
         });
 
+        // Music options functionality
+        const musicOptionsBtn = document.getElementById('musicOptionsBtn');
+        const musicInputContainer = document.getElementById('musicInputContainer');
+        const musicUrlInput = document.getElementById('musicUrlInput');
+        const loadMusicBtn = document.getElementById('loadMusicBtn');
+        const musicLoadStatus = document.getElementById('musicLoadStatus');
+
+        musicOptionsBtn.addEventListener('click', () => {
+            musicInputContainer.classList.toggle('hidden');
+        });
+
+        loadMusicBtn.addEventListener('click', () => {
+            const url = musicUrlInput.value.trim();
+            if (url) {
+                musicLoadStatus.textContent = 'Loading...';
+                audio.pause();
+                audio.src = url;
+                audio.load();
+                audio.play()
+                    .then(() => {
+                        audioPlaying = true;
+                        audioBtn.textContent = '⏸️ CUSTOM MUSIC';
+                        audioBtn.classList.add('playing');
+                        musicLoadStatus.textContent = 'Loaded!';
+                    })
+                    .catch(e => {
+                        console.error('Failed to load custom audio:', e);
+                        musicLoadStatus.textContent = 'Failed to load! (Check URL & CORS)';
+                        audio.src = 'bondi_address_congress.mp3'; // Fallback to default
+                        audio.load();
+                        audioPlaying = false;
+                        audioBtn.textContent = '▶️ BONDI TESTIMONY';
+                        audioBtn.classList.remove('playing');
+                    });
+            } else {
+                musicLoadStatus.textContent = 'Please enter a URL.';
+            }
+        });
+
+        // Helper function to play sound effects
+        function playSound(soundElement) {
+            if (soundElement) {
+                soundElement.currentTime = 0; // Rewind to start
+                soundElement.volume = volumeSlider.value / 100; // Use current master volume
+                soundElement.play().catch(e => console.log("Sound play error:", e));
+            }
+        }
+
         // Spawn obstacles - BIGGER and MORE CENTERED
         function spawnObstacle() {
-            const word = regularWords[Math.floor(Math.random() * regularWords.length)];
-            // More centered spawn area
-            const y = 120 + Math.random() * (canvas.height - 300);
+            const index = Math.floor(Math.random() * regularWords.length);
+            const content = regularWords[index];
+            const initialY = 120 + Math.random() * (canvas.height - 300);
             
+            let obstacleType = 'text';
+            let obstacleWidth = 140;
+            let obstacleHeight = 40;
+
+            // Check if content is an emoji (simple check for common emojis)
+            if (content.length <= 2 && (content.codePointAt(0) > 0x1F000 || content.codePointAt(0) === 0x26A0 || content.codePointAt(0) === 0x274C || content.codePointAt(0) === 0x1F6AB)) {
+                obstacleType = 'emoji';
+                obstacleWidth = 50; // Smaller size for emojis
+                obstacleHeight = 50;
+            }
+
+            const patternType = Math.random();
+            let pattern = 'horizontal';
+            let oscillationAmplitude = 0;
+            let oscillationFrequency = 0;
+            let verticalSpeed = 0;
+
+            if (score > 1000 && patternType < 0.4) { // Introduce vertical movement after some score
+                pattern = 'sine';
+                oscillationAmplitude = 30 + Math.random() * 50; // 30 to 80 pixels vertical movement
+                oscillationFrequency = 0.02 + Math.random() * 0.05; // Slower to faster oscillation
+            } else if (score > 500 && patternType < 0.2) { // Introduce simple vertical movement earlier
+                pattern = 'vertical';
+                verticalSpeed = (Math.random() < 0.5 ? 1 : -1) * (0.5 + Math.random() * 1); // 0.5 to 1.5 pixels/frame
+            }
+
             obstacles.push({
                 x: canvas.width + 50,
-                y: y,
-                word: word,
-                width: 140,
-                height: 40,
-                passed: false
+                y: initialY,
+                initialY: initialY, // Store initial Y for sine wave
+                content: content, // Changed from 'word' to 'content'
+                width: obstacleWidth,
+                height: obstacleHeight,
+                passed: false,
+                pattern: pattern,
+                oscillationAmplitude: oscillationAmplitude,
+                oscillationFrequency: oscillationFrequency,
+                verticalSpeed: verticalSpeed,
+                type: obstacleType // New: store obstacle type
             });
         }
 
         // Spawn redacted items - BIGGER and MORE CENTERED
         function spawnRedacted() {
-            // More centered spawn area
-            const y = 120 + Math.random() * (canvas.height - 300);
-            const word = redactedWords[Math.floor(Math.random() * redactedWords.length)];
+            const initialY = 120 + Math.random() * (canvas.height - 300);
+            
+            let selectedItem;
+            const rarityRoll = Math.random();
+            if (rarityRoll < 0.05 && score > 2000) { // 5% chance for epic, only after some score
+                const epics = redactedWords.filter(item => item.rarity === 'epic');
+                selectedItem = epics[Math.floor(Math.random() * epics.length)];
+            } else if (rarityRoll < 0.25) { // 20% chance for rare
+                const rares = redactedWords.filter(item => item.rarity === 'rare');
+                selectedItem = rares[Math.floor(Math.random() * rares.length)];
+            } else { // 75% chance for common
+                const commons = redactedWords.filter(item => item.rarity === 'common');
+                selectedItem = commons[Math.floor(Math.random() * commons.length)];
+            }
+
+            const word = selectedItem.word;
+            const isGolden = selectedItem.rarity === 'epic';
+            const givesPowerup = selectedItem.givesPowerup;
+
+            const patternType = Math.random();
+            let pattern = 'horizontal';
+            let oscillationAmplitude = 0;
+            let oscillationFrequency = 0;
+            let verticalSpeed = 0;
+
+            if (score > 1200 && patternType < 0.5) { // Introduce vertical movement after some score, slightly more often than obstacles
+                pattern = 'sine';
+                oscillationAmplitude = 40 + Math.random() * 60; // 40 to 100 pixels vertical movement
+                oscillationFrequency = 0.03 + Math.random() * 0.06; // Slower to faster oscillation
+            } else if (score > 600 && patternType < 0.3) { // Introduce simple vertical movement earlier
+                pattern = 'vertical';
+                verticalSpeed = (Math.random() < 0.5 ? 1 : -1) * (0.6 + Math.random() * 1.2); // 0.6 to 1.8 pixels/frame
+            }
             
             redactedItems.push({
                 x: canvas.width + 50,
-                y: y,
+                y: initialY,
+                initialY: initialY, // Store initial Y for sine wave
                 width: 160,
                 height: 35,
                 word: word,
                 collected: false,
                 exploding: false,
-                explosionFrame: 0
+                explosionFrame: 0,
+                pattern: pattern,
+                oscillationAmplitude: oscillationAmplitude,
+                oscillationFrequency: oscillationFrequency,
+                verticalSpeed: verticalSpeed,
+                rarity: selectedItem.rarity, // New: store rarity
+                isGolden: isGolden, // New: flag for golden redacted items
+                givesPowerup: givesPowerup // New: powerup to give on collection
+            });
+        }
+
+        // Spawn a random power-up or debuff
+        function spawnEffect() {
+            const initialY = 150 + Math.random() * (canvas.height - 300);
+            const isPowerup = Math.random() < 0.7; // 70% chance for power-up, 30% for debuff
+            const types = isPowerup ? Object.values(POWERUP_TYPES) : Object.values(DEBUFF_TYPES);
+            const effectType = types[Math.floor(Math.random() * types.length)];
+
+            effects.push({
+                x: canvas.width + 50,
+                y: initialY,
+                initialY: initialY,
+                width: 50, // Smaller size for effects
+                height: 50,
+                type: effectType,
+                isPowerup: isPowerup,
+                collected: false,
+                pattern: 'horizontal', // Default to horizontal for simplicity, can be varied later
+                oscillationAmplitude: 0,
+                oscillationFrequency: 0,
+                verticalSpeed: 0,
+                emoji: effectType.emoji // Store emoji for drawing
             });
         }
 
@@ -811,10 +1123,24 @@
         function activateTrump() {
             trumpActive = true;
             trump.active = true;
-            trump.x = -120;
-            // Random Y position near player but avoidable
-            trump.y = 150 + Math.random() * (canvas.height - 350);
+            trump.x = canvas.width + 120; // Start off-screen right
             trumpEncounters++;
+
+            // Randomly assign a pattern
+            const patternRoll = Math.random();
+            if (patternRoll < 0.4) { // 40% chance for straight (default)
+                trump.pattern = 'straight';
+                trump.y = 150 + Math.random() * (canvas.height - 350); // Random Y
+            } else if (patternRoll < 0.7) { // 30% chance for dive
+                trump.pattern = 'dive';
+                trump.initialY = 80 + Math.random() * 100; // Start higher
+                trump.y = trump.initialY;
+            } else { // 30% chance for wave
+                trump.pattern = 'wave';
+                trump.initialY = 150 + Math.random() * (canvas.height - 350); // Center Y for wave
+                trump.y = trump.initialY;
+                trump.wavePhase = 0; // Reset wave phase
+            }
             
             // Show warning
             const warning = document.getElementById('trumpWarning');
@@ -823,6 +1149,7 @@
             setTimeout(() => {
                 warning.classList.add('hidden');
             }, 1500);
+            playSound(document.getElementById('trumpAppearSound')); // Play Trump appear sound
         }
 
         // Create particles
@@ -916,25 +1243,46 @@
 
             // Update background documents
             documents.forEach(doc => {
-                doc.x -= doc.speed;
+                doc.x -= doc.speed * (gameSpeed / initialGameSpeed); // Scale speed by current gameSpeed relative to initial
+                doc.rotationAngle += doc.rotationSpeed * (gameSpeed / initialGameSpeed); // Rotate faster with game speed
+                
+                // Reset position if off-screen
                 if (doc.x < -300) {
                     doc.x = canvas.width + 50;
                     doc.y = Math.random() * (canvas.height - 300) + 50;
+                    doc.rotationAngle = Math.random() * Math.PI * 2; // Reset rotation
                 }
             });
 
             // Spawn obstacles and redacted
-            if (!trumpActive && frameCount % 80 === 0) {
+            // Adjust spawn frequency dynamically based on score
+            const currentObstacleSpawnFrequency = Math.max(maxObstacleSpawnFrequency, obstacleSpawnFrequency - Math.floor(score * spawnFrequencyDecreasePerScore));
+            const currentRedactedSpawnFrequency = Math.max(maxRedactedSpawnFrequency, redactedSpawnFrequency - Math.floor(score * spawnFrequencyDecreasePerScore));
+
+            if (!trumpActive && frameCount % Math.floor(currentObstacleSpawnFrequency) === 0) {
                 if (Math.random() < 0.6) spawnObstacle();
             }
-            if (!trumpActive && frameCount % 100 === 0) {
+            if (!trumpActive && frameCount % Math.floor(currentRedactedSpawnFrequency) === 0) {
                 spawnRedacted();
+            }
+            if (!trumpActive && frameCount % 300 === 0 && score > 200) { // Spawn an effect every 5 seconds after some score
+                spawnEffect();
             }
 
             // Update obstacles - MORE FORGIVING HITBOX
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 const obs = obstacles[i];
                 obs.x -= gameSpeed;
+
+                if (obs.pattern === 'sine') {
+                    obs.y = obs.initialY + obs.oscillationAmplitude * Math.sin(frameCount * obs.oscillationFrequency);
+                } else if (obs.pattern === 'vertical') {
+                    obs.y += obs.verticalSpeed;
+                    // Reverse vertical direction if hitting canvas top/bottom
+                    if (obs.y < 60 || obs.y > canvas.height - obs.height - 20) {
+                        obs.verticalSpeed *= -1;
+                    }
+                }
 
                 // Smaller hitbox for obstacles (more forgiving)
                 const obstacleHitbox = {
@@ -946,8 +1294,15 @@
 
                 // Collision with player
                 if (checkCollision(player, obstacleHitbox)) {
-                    createParticles(player.x + player.width/2, player.y + player.height/2, '#c0392b', 20);
-                    gameOver();
+                    if (!player.invulnerable) { // Only game over if not invulnerable
+                        createParticles(player.x + player.width/2, player.y + player.height/2, '#c0392b', 20);
+                        playSound(document.getElementById('hitSound')); // Play hit sound
+                        gameOver();
+                    } else {
+                        // Visual feedback for invulnerability hit
+                        createParticles(obs.x + obs.width/2, obs.y + obs.height/2, '#f39c12', 10);
+                        obstacles.splice(i, 1); // Remove obstacle even if invulnerable
+                    }
                 }
 
                 if (obs.x < -200) {
@@ -970,20 +1325,76 @@
                 
                 item.x -= gameSpeed;
 
+                if (item.pattern === 'sine') {
+                    item.y = item.initialY + item.oscillationAmplitude * Math.sin(frameCount * item.oscillationFrequency);
+                } else if (item.pattern === 'vertical') {
+                    item.y += item.verticalSpeed;
+                    // Reverse vertical direction if hitting canvas top/bottom
+                    if (item.y < 60 || item.y > canvas.height - item.height - 20) {
+                        item.verticalSpeed *= -1;
+                    }
+                }
+
                 // Collection - LARGER HITBOX for easy collection (never causes game over!)
                 // Use expanded hitbox for easier collection
                 const collectionBox = {
-                    x: item.x - 20,
-                    y: item.y - 20,
-                    width: item.width + 40,
-                    height: item.height + 40
+                    x: item.x - 20 * player.collectionRadiusMultiplier,
+                    y: item.y - 20 * player.collectionRadiusMultiplier,
+                    width: item.width + 40 * player.collectionRadiusMultiplier,
+                    height: item.height + 40 * player.collectionRadiusMultiplier
                 };
                 
                 if (!item.collected && !item.exploding && checkCollision(player, collectionBox)) {
                     item.exploding = true;
                     item.collected = true;
                     filesCollected++;
-                    score += 100;
+                    
+                    let pointsAwarded = 100;
+                    if (item.rarity === 'rare') {
+                        pointsAwarded = 200;
+                    } else if (item.rarity === 'epic') {
+                        pointsAwarded = 500; // Even more points for epic
+                    }
+
+                    // Combo logic
+                    if (comboTimer > 0) {
+                        comboCount++;
+                        score += pointsAwarded * comboCount; // Bonus score for combo
+                    } else {
+                        comboCount = 1;
+                        score += pointsAwarded;
+                    }
+                    comboTimer = COMBO_MAX_DELAY; // Reset combo timer
+                    playSound(document.getElementById('collectSound')); // Play collect sound
+                    
+                    // Update persistent stats
+                    totalFilesDeclassified++;
+                    if (comboCount > longestComboStreak) {
+                        longestComboStreak = comboCount;
+                    }
+                    
+                    // Trigger guaranteed power-up if applicable
+                    if (item.givesPowerup) {
+                        const powerupType = POWERUP_TYPES[item.givesPowerup];
+                        if (powerupType) {
+                            activeEffects.push({
+                                type: powerupType,
+                                isPowerup: true,
+                                duration: powerupType.duration
+                            });
+                            // Immediately apply the power-up effect
+                            if (powerupType.effect.gameSpeedMultiplier) {
+                                gameSpeed *= powerupType.effect.gameSpeedMultiplier;
+                            }
+                            if (powerupType.effect.invulnerable) {
+                                player.invulnerable = true;
+                            }
+                            if (powerupType.effect.collectionRadius) {
+                                player.collectionRadiusMultiplier = powerupType.effect.collectionRadius;
+                            }
+                            playSound(document.getElementById('powerupSound'));
+                        }
+                    }
                     
                     // Create EXPLOSION particles
                     createExplosion(item.x + item.width/2, item.y + item.height/2, item.word);
@@ -997,10 +1408,8 @@
                         activateTrump();
                     }
                     
-                    // Speed up
-                    if (filesCollected % 5 === 0) {
-                        gameSpeed += 0.15;
-                    }
+                    // Continuously increase game speed
+                    gameSpeed += gameSpeedIncreasePerFile;
                     
                     document.getElementById('score').textContent = score;
                     continue;
@@ -1012,35 +1421,247 @@
                 }
             }
 
-            // Update Trump - SMALLER collision box but aggressive tracking
-            if (trumpActive) {
-                trump.x += trump.speed;
-                
-                // Trump aggressively tracks player (faster than before)
-                const targetY = player.y;
-                trump.y += (targetY - trump.y) * 0.08;
-                
-                // Smaller collision box for Trump (more forgiving)
-                const trumpHitbox = {
-                    x: trump.x + 10,
-                    y: trump.y + 10,
-                    width: trump.width - 20,
-                    height: trump.height - 20
-                };
-                
-                // Collision with Trump - use smaller hitbox
-                if (checkCollision(player, trumpHitbox)) {
-                    createParticles(player.x + player.width/2, player.y + player.height/2, '#e74c3c', 30);
-                    gameOver();
+            // Update effects (power-ups/debuffs)
+            for (let i = effects.length - 1; i >= 0; i--) {
+                const effect = effects[i];
+                effect.x -= gameSpeed;
+
+                // Apply movement pattern if any (currently horizontal for simplicity)
+                if (effect.pattern === 'sine') {
+                    effect.y = effect.initialY + effect.oscillationAmplitude * Math.sin(frameCount * effect.oscillationFrequency);
+                } else if (effect.pattern === 'vertical') {
+                    effect.y += effect.verticalSpeed;
+                    if (effect.y < 60 || effect.y > canvas.height - effect.height - 20) {
+                        effect.verticalSpeed *= -1;
+                    }
                 }
-                
-                // Trump passes through
-                if (trump.x > canvas.width + 100) {
-                    trumpActive = false;
-                    trump.active = false;
-                    score += 500; // Bonus for surviving Trump
-                    document.getElementById('score').textContent = score;
-                    createParticles(canvas.width - 50, trump.y + trump.height/2, '#27ae60', 20);
+
+                // Collision with player
+                const effectHitbox = {
+                    x: effect.x,
+                    y: effect.y,
+                    width: effect.width,
+                    height: effect.height
+                };
+
+                if (!effect.collected && checkCollision(player, effectHitbox)) {
+                    effect.collected = true;
+                    // Apply effect
+                    activeEffects.push({
+                        type: effect.type,
+                        isPowerup: effect.isPowerup,
+                        duration: effect.type.duration
+                    });
+                    
+                    // Immediately apply the effect to game state
+                    if (effect.type.effect.gameSpeedMultiplier) {
+                        gameSpeed *= effect.type.effect.gameSpeedMultiplier;
+                    }
+                    if (effect.type.effect.invulnerable) {
+                        player.invulnerable = true;
+                    }
+                    if (effect.type.effect.collectionRadius) {
+                        player.collectionRadiusMultiplier = effect.type.effect.collectionRadius;
+                    }
+                    if (effect.type.effect.reverseJump) {
+                        player.jumpStrength *= -1; // Reverse jump
+                    }
+                    if (effect.type.effect.jumpStrengthMultiplier) {
+                        player.jumpStrength *= effect.type.effect.jumpStrengthMultiplier;
+                    }
+                    if (effect.type.effect.blur) {
+                        document.getElementById('gameContainer').style.filter = 'blur(5px)';
+                    }
+                    if (effect.type.effect.comboBreak) { // New: Combo breaker effect
+                        comboCount = 0;
+                        comboTimer = 0;
+                    }
+                    effects.splice(i, 1); // Remove collected effect
+                    createParticles(effect.x + effect.width/2, effect.y + effect.height/2, effect.isPowerup ? '#27ae60' : '#e74c3c', 15);
+                    playSound(document.getElementById(effect.isPowerup ? 'powerupSound' : 'debuffSound')); // Play appropriate sound
+                    continue; // Skip to next item
+                }
+
+                if (effect.x < -100) {
+                    effects.splice(i, 1); // Remove off-screen effects
+                }
+            }
+
+            // Update active effects (manage duration and revert)
+            for (let i = activeEffects.length - 1; i >= 0; i--) {
+                const activeEffect = activeEffects[i];
+                activeEffect.duration--;
+
+                // Dynamic blur intensity for BLURRED_VISION
+                if (activeEffect.type.effect.blur) {
+                    const blurIntensity = 3 + 2 * Math.abs(Math.sin(frameCount * 0.05)); // Oscillate between 3px and 5px
+                    document.getElementById('gameContainer').style.filter = `blur(${blurIntensity}px)`;
+                }
+
+                if (activeEffect.duration <= 0) {
+                    // Revert effect
+                    if (activeEffect.type.effect.gameSpeedMultiplier) {
+                        gameSpeed /= activeEffect.type.effect.gameSpeedMultiplier;
+                    }
+                    if (activeEffect.type.effect.invulnerable) {
+                        player.invulnerable = false;
+                    }
+                    if (activeEffect.type.effect.collectionRadius) {
+                        player.collectionRadiusMultiplier = 1; // Reset to default
+                    }
+                    if (activeEffect.type.effect.reverseJump) {
+                        player.jumpStrength *= -1; // Revert jump direction
+                    }
+                    if (activeEffect.type.effect.jumpStrengthMultiplier) {
+                        player.jumpStrength /= activeEffect.type.effect.jumpStrengthMultiplier; // Revert jump strength
+                    }
+                    if (activeEffect.type.effect.blur) {
+                        document.getElementById('gameContainer').style.filter = 'none';
+                    }
+                    activeEffects.splice(i, 1); // Remove expired effect
+                }
+            }
+
+                        // Update Trump - SMALLER collision box but aggressive tracking
+
+                        if (trumpActive) {
+
+                            // Scale Trump's speed and tracking
+
+                            let currentTrumpSpeed = trumpSpeedBase + (trumpEncounters * trumpSpeedIncreaseFactor);
+
+                            let currentTrumpTracking = trumpTrackingBase + (trumpEncounters * trumpTrackingIncreaseFactor);
+
+            
+
+                            if (isBossRush) { // Boss Rush mode makes Trump much harder
+
+                                currentTrumpSpeed *= 1.5; // 50% faster
+
+                                currentTrumpTracking *= 1.5; // 50% more aggressive tracking
+
+            
+
+                                // In Boss Rush, force Trump to use more aggressive patterns
+
+                                // If current pattern is straight, randomly switch to dive or wave
+
+                                if (trump.pattern === 'straight' && Math.random() < 0.5) {
+
+                                    trump.pattern = (Math.random() < 0.5) ? 'dive' : 'wave';
+
+                                    trump.initialY = (trump.pattern === 'dive') ? (80 + Math.random() * 100) : (150 + Math.random() * (canvas.height - 350));
+
+                                    trump.y = trump.initialY;
+
+                                    trump.wavePhase = 0;
+
+                                }
+
+                            }
+
+            
+
+                            trump.x -= currentTrumpSpeed; // Always move right to left
+
+            
+
+                            if (trump.pattern === 'straight') {
+
+                                const targetY = player.y;
+
+                                trump.y += (targetY - trump.y) * currentTrumpTracking;
+
+                            } else if (trump.pattern === 'dive') {
+
+                                // Dive pattern: move down quickly then less tracking
+
+                                if (trump.x > canvas.width / 2) { // While on right half of screen, dive
+
+                                    const diveTargetY = player.y + 100; // Target slightly below player
+
+                                    trump.y += (diveTargetY - trump.y) * (currentTrumpTracking * 1.5);
+
+                                } else { // After diving, track normally but less aggressively
+
+                                    const targetY = player.y;
+
+                                    trump.y += (targetY - trump.y) * (currentTrumpTracking * 0.5);
+
+                                }
+
+                            } else if (trump.pattern === 'wave') {
+
+                                // Wave pattern: vertical oscillation while moving horizontally
+
+                                trump.wavePhase += 0.05; // Speed of wave
+
+                                trump.y = trump.initialY + (Math.sin(trump.wavePhase) * (50 + trumpEncounters * 5)); // Amplitude increases with encounters
+
+                            }
+
+                            
+
+                            // Keep Trump within vertical bounds
+
+                            trump.y = Math.max(60, Math.min(canvas.height - trump.height - 20, trump.y));
+
+                            
+
+                            // Smaller collision box for Trump (more forgiving)
+
+                            const trumpHitbox = {
+
+                                x: trump.x + 10,
+
+                                y: trump.y + 10,
+
+                                width: trump.width - 20,
+
+                                height: trump.height - 20
+
+                            };
+
+                            
+
+                            // Collision with Trump - use smaller hitbox
+
+                            if (checkCollision(player, trumpHitbox)) {
+
+                                createParticles(player.x + player.width/2, player.y + player.height/2, '#e74c3c', 30);
+
+                                gameOver();
+
+                            }
+
+                            
+
+                            // Trump passes through (check if he is off-screen to the left)
+
+                            if (trump.x < -100) {
+
+                                trumpActive = false;
+
+                                trump.active = false;
+
+                                score += 500; // Bonus for surviving Trump
+
+                                document.getElementById('score').textContent = score;
+
+                                createParticles(50, trump.y + trump.height/2, '#27ae60', 20); // Particles now on left side
+
+                                playSound(document.getElementById('trumpPassSound')); // Play Trump pass sound
+
+                            }
+
+                        }
+
+
+            // Update combo timer
+            if (comboTimer > 0) {
+                comboTimer--;
+                if (comboTimer <= 0) {
+                    comboCount = 0; // Reset combo if timer runs out
                 }
             }
 
@@ -1065,8 +1686,15 @@
 
             // Draw background documents - AUTHENTIC FBI/DOJ CASE FILES
             documents.forEach(doc => {
+                ctx.save(); // Save current canvas state
                 ctx.globalAlpha = doc.opacity;
                 
+                // Apply transformations
+                ctx.translate(doc.x + doc.width / 2, doc.y + doc.height / 2);
+                ctx.rotate(doc.rotationAngle);
+                ctx.transform(1, doc.skewAmount, 0, 1, 0, 0); // Skew effect (m11, m12, m21, m22, dx, dy)
+                ctx.translate(-(doc.x + doc.width / 2), -(doc.y + doc.height / 2)); // Translate back
+
                 // Document background
                 ctx.fillStyle = '#fefefe';
                 ctx.fillRect(doc.x, doc.y, doc.width, doc.height);
@@ -1131,6 +1759,7 @@
                 ctx.fillText(`PAGE ${Math.floor(Math.random() * 20) + 1} OF 247`, doc.x + doc.width/2, doc.y + doc.height - 8);
                 
                 ctx.globalAlpha = 1;
+                ctx.restore(); // Restore canvas state
             });
 
             if (gameState === 'playing' || gameState === 'gameover') {
@@ -1138,17 +1767,30 @@
                 ctx.textAlign = 'left';
 
                 // Draw obstacles (regular words) - Typewriter style like real docs
-                ctx.font = '16px "Courier Prime", monospace';
                 ctx.textAlign = 'left';
                 obstacles.forEach(obs => {
-                    // Typewritten text look
-                    ctx.fillStyle = '#2c2416';
-                    ctx.fillText(obs.word, obs.x, obs.y + 20);
+                    if (obs.type === 'text') {
+                        ctx.font = '16px "Courier Prime", monospace';
+                        ctx.fillStyle = '#2c2416';
+                        ctx.fillText(obs.content, obs.x, obs.y + 20);
+                    } else if (obs.type === 'emoji') {
+                        ctx.font = '40px Arial'; // Larger font for emojis
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(obs.content, obs.x + obs.width / 2, obs.y + obs.height / 2 + 5);
+                    }
                 });
 
                 // Draw redacted items - AUTHENTIC GOVERNMENT STYLE
                 redactedItems.forEach(item => {
                     if (!item.collected && !item.exploding) {
+                        ctx.save();
+                        if (item.isGolden) {
+                            ctx.shadowColor = '#FFD700'; // Golden glow
+                            ctx.shadowBlur = 15;
+                            ctx.shadowOffsetX = 0;
+                            ctx.shadowOffsetY = 0;
+                        }
                         // AUTHENTIC REDACTION: Solid black box like real classified docs
                         ctx.fillStyle = '#000000';
                         ctx.fillRect(item.x, item.y, item.width, item.height);
@@ -1165,6 +1807,13 @@
                                 ctx.fillRect(item.x + i, item.y, 2, item.height);
                             }
                         }
+                        if (item.isGolden) {
+                            ctx.font = '20px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText('✨', item.x + item.width / 2, item.y + item.height / 2);
+                        }
+                        ctx.restore();
                     }
                     
                     // Draw explosion revealing the name
@@ -1219,6 +1868,17 @@
                     }
                 });
 
+                // Draw spawned effects (power-ups/debuffs)
+                effects.forEach(effect => {
+                    ctx.save();
+                    ctx.translate(effect.x + effect.width/2, effect.y + effect.height/2);
+                    ctx.font = '30px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(effect.emoji, 0, 0);
+                    ctx.restore();
+                });
+
                 // Draw Trump - REALISTIC SMALLER VERSION
                 if (trumpActive) {
                     ctx.save();
@@ -1231,12 +1891,12 @@
                     ctx.translate(centerX + shakeX, centerY + shakeY);
                     
                     // Angry red glow behind
-                    const gradient = ctx.createRadialGradient(0, 0, 10, 0, 0, 60);
-                    gradient.addColorStop(0, 'rgba(255, 0, 0, 0.4)');
+                    const gradient = ctx.createRadialGradient(0, 0, 15, 0, 0, 70); // Larger inner, larger outer radius
+                    gradient.addColorStop(0, 'rgba(255, 0, 0, 0.6)'); // More opaque
                     gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
                     ctx.fillStyle = gradient;
                     ctx.beginPath();
-                    ctx.arc(0, 0, 60, 0, Math.PI * 2);
+                    ctx.arc(0, 0, 70, 0, Math.PI * 2); // Larger circle
                     ctx.fill();
                     
                     // Draw realistic Trump face (cartoon style but detailed)
@@ -1266,33 +1926,33 @@
                     ctx.quadraticCurveTo(-45, -10, -50, -20);
                     ctx.fill();
                     
-                    // Eyebrows - angry
-                    ctx.strokeStyle = '#8B6914';
-                    ctx.lineWidth = 4;
+                    // Eyebrows - angry and darker
+                    ctx.strokeStyle = '#4A3B18'; // Darker brown
+                    ctx.lineWidth = 5; // Thicker
                     ctx.lineCap = 'round';
                     // Left eyebrow
                     ctx.beginPath();
-                    ctx.moveTo(-35, -20);
-                    ctx.lineTo(-10, -25);
+                    ctx.moveTo(-38, -25); // Adjusted position
+                    ctx.lineTo(-12, -30); // Adjusted position
                     ctx.stroke();
                     // Right eyebrow  
                     ctx.beginPath();
-                    ctx.moveTo(10, -25);
-                    ctx.lineTo(35, -20);
+                    ctx.moveTo(12, -30); // Adjusted position
+                    ctx.lineTo(38, -25); // Adjusted position
                     ctx.stroke();
                     
                     // Eyes - angry narrowed
                     ctx.fillStyle = '#FFF';
                     ctx.beginPath();
-                    ctx.ellipse(-22, -10, 12, 8, 0, 0, Math.PI * 2);
-                    ctx.ellipse(22, -10, 12, 8, 0, 0, Math.PI * 2);
+                    ctx.ellipse(-22, -10, 15, 6, 0, 0, Math.PI * 2); // Wider, more narrowed
+                    ctx.ellipse(22, -10, 15, 6, 0, 0, Math.PI * 2); // Wider, more narrowed
                     ctx.fill();
                     
                     // Pupils
                     ctx.fillStyle = '#000';
                     ctx.beginPath();
-                    ctx.arc(-22, -10, 5, 0, Math.PI * 2);
-                    ctx.arc(22, -10, 5, 0, Math.PI * 2);
+                    ctx.arc(-22, -10, 4, 0, Math.PI * 2); // Slightly smaller pupils
+                    ctx.arc(22, -10, 4, 0, Math.PI * 2); // Slightly smaller pupils
                     ctx.fill();
                     
                     // Angry eyebrows over eyes
@@ -1315,12 +1975,24 @@
                     ctx.lineTo(5, 15);
                     ctx.stroke();
                     
-                    // Mouth - angry frown
+                    // Mouth - angry scowl with creases
                     ctx.strokeStyle = '#CC0000';
-                    ctx.lineWidth = 3;
+                    ctx.lineWidth = 4; // Thicker line
                     ctx.beginPath();
-                    ctx.moveTo(-20, 30);
-                    ctx.quadraticCurveTo(0, 22, 20, 30);
+                    ctx.moveTo(-25, 35); // Lowered and wider
+                    ctx.quadraticCurveTo(0, 25, 25, 35); // More pronounced curve
+                    ctx.stroke();
+                    
+                    // Creases around mouth
+                    ctx.strokeStyle = '#CC8030'; // Skin tone color
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(-28, 30);
+                    ctx.lineTo(-20, 22);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(28, 30);
+                    ctx.lineTo(20, 22);
                     ctx.stroke();
                     
                     // Teeth
@@ -1391,7 +2063,7 @@
                 ctx.fill();
                 
                 // The magnifying glass emoji
-                ctx.fillText('🔍', 0, 2);
+                ctx.fillText(PLAYER_EMOJIS[selectedPlayerEmojiIndex], 0, 2);
                 ctx.shadowBlur = 0;
                 
                 // Bright border ring
@@ -1408,6 +2080,29 @@
                 ctx.fillText('✦', -28, 20);
                 
                 ctx.restore();
+
+                // Draw active effects UI
+                let effectDisplayY = 100;
+                activeEffects.forEach(effect => {
+                    ctx.font = '20px Arial';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'top';
+                    ctx.fillStyle = effect.isPowerup ? '#27ae60' : '#e74c3c';
+                    ctx.fillText(effect.type.emoji + ' ' + Math.ceil(effect.duration / 60) + 's', 20, effectDisplayY);
+                    effectDisplayY += 25;
+                });
+
+                // Draw combo display
+                if (comboCount > 1) {
+                    ctx.font = 'bold 30px "Special Elite", cursive';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#f39c12'; // Orange/gold color for combo
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    ctx.shadowBlur = 5;
+                    ctx.fillText('COMBO x' + comboCount, canvas.width / 2, 70);
+                    ctx.shadowBlur = 0;
+                }
 
                 // Draw particles
                 particles.forEach(p => {
@@ -1465,15 +2160,26 @@
             filesCollected = 0;
             trumpEncounters = 0;
             frameCount = 0;
-            gameSpeed = 2.5;
+            gameSpeed = parseFloat(initialSpeedSlider.value); // Use value from slider
+            obstacleSpawnFrequency = 80; // Reset to base
+            redactedSpawnFrequency = 100; // Reset to base
             trumpActive = false;
+            isBossRush = false; // Reset Boss Rush flag
             
             player.y = 325;
             player.velocity = 0;
+            player.jumpStrength = baseJumpStrength; // Reset jump strength
+            player.invulnerable = false; // Reset invulnerability
+            player.collectionRadiusMultiplier = 1; // Reset collection radius
+            comboCount = 0; // Reset combo count
+            comboTimer = 0; // Reset combo timer
             
             obstacles = [];
             redactedItems = [];
             particles = [];
+            effects = []; // Initialize effects array
+            activeEffects = []; // Initialize activeEffects array
+            sessionStartTime = Date.now(); // Start tracking playtime
             
             document.getElementById('score').textContent = '0';
             document.getElementById('progressFill').style.width = '0%';
@@ -1486,10 +2192,25 @@
         function gameOver() {
             gameState = 'gameover';
             trumpActive = false;
-            
+            player.invulnerable = false; // Reset invulnerability
+            player.collectionRadiusMultiplier = 1; // Reset collection radius
+            player.jumpStrength = baseJumpStrength; // Reset jump strength
+            document.getElementById('gameContainer').style.filter = 'none'; // Clear any blur effect
+            activeEffects = []; // Clear active effects
+            playSound(document.getElementById('gameOverSound')); // Play game over sound
+
+            // Calculate playtime for this session
+            const sessionPlaytimeSeconds = Math.floor((Date.now() - sessionStartTime) / 1000);
+            totalPlaytime += sessionPlaytimeSeconds;
+
+            // Save persistent stats
+            localStorage.setItem('epsteinFilesHighScore', highScore);
+            localStorage.setItem('epsteinFilesTotalDeclassified', totalFilesDeclassified);
+            localStorage.setItem('epsteinFilesLongestComboStreak', longestComboStreak);
+            localStorage.setItem('epsteinFilesTotalPlaytime', totalPlaytime);
+
             if (score > highScore) {
                 highScore = score;
-                localStorage.setItem('epsteinFilesHighScore', highScore);
                 document.getElementById('highScore').textContent = highScore;
             }
             
@@ -1497,6 +2218,27 @@
             document.getElementById('filesCount').textContent = filesCollected;
             document.getElementById('trumpDodged').textContent = trumpEncounters;
             document.getElementById('gameOverScreen').classList.remove('hidden');
+
+            // Display persistent stats on game over screen
+            const formatTime = (totalSeconds) => {
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                let result = '';
+                if (hours > 0) result += `${hours}h `;
+                if (minutes > 0) result += `${minutes}m `;
+                result += `${seconds}s`;
+                return result.trim();
+            };
+
+            const newStatsDiv = document.createElement('div');
+            newStatsDiv.classList.add('stats');
+            newStatsDiv.innerHTML = `Total Declassified: <span style="color: #27ae60; font-weight: bold;">${totalFilesDeclassified}</span><br>
+                                    Longest Combo: <span style="color: #f39c12; font-weight: bold;">${longestComboStreak}</span><br>
+                                    Total Playtime: <span style="color: #3498db; font-weight: bold;">${formatTime(totalPlaytime)}</span>`;
+            
+            const restartBtn = document.getElementById('restartBtn');
+            restartBtn.parentNode.insertBefore(newStatsDiv, restartBtn);
         }
 
         // Restart game
