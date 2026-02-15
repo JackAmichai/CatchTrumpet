@@ -3,20 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CATCH TRUMPET - Declassified</title>
+    <title>CATCH TRUMPET - Flappy Bird Style</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Caveat&family=Reenie+Beanie&family=VT323&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --paper-color: #fdfbf7;
-            --ink-black: #2c3e50;
-            --ink-blue: #2980b9;
-            --stamp-red: #c0392b;
-            --stamp-blue: #2980b9;
-            --bg-color: #f0ebe3;
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -24,671 +15,573 @@
         }
 
         body {
-            background-color: #f4f1ea;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
-            font-family: 'Courier New', Courier, monospace;
-            color: #333;
-            padding: 2rem;
-            margin: 0;
+            background-color: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        /* BACKGROUND QUOTES LAYER */
-        #quote-layer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            font-family: 'VT323', monospace;
             overflow: hidden;
-            z-index: 0;
-            pointer-events: none;
         }
 
-        .bg-quote {
-            position: absolute;
-            font-family: 'Courier New', Courier, monospace;
-            font-weight: bold;
-            text-transform: uppercase;
-            opacity: 0.08;
-            color: #8b0000;
-            white-space: nowrap;
-            font-size: 14px;
-            transform-origin: center;
-            user-select: none;
-            mix-blend-mode: multiply;
-        }
-
-        .document-container {
-            width: 100%;
-            max-width: 850px;
-            padding: 3rem;
-            background-color: var(--paper-color);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08);
+        #gameContainer {
             position: relative;
-            border: 1px solid #e0dcd5;
-            background-image: linear-gradient(to bottom, transparent 98%, rgba(0,0,0,0.03) 100%),
-                              url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
-            z-index: 1;
+            width: 800px;
+            height: 600px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 100%);
+            border: 4px solid #2c3e50;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            overflow: hidden;
         }
 
-        /* Game Header */
-        .game-header {
-            border-bottom: 2px solid #000;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .header-col {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .score-board {
-            text-align: right;
-            font-family: 'VT323', monospace;
-            font-size: 1.5rem;
-        }
-
-        .score-board span {
+        #gameCanvas {
             display: block;
-            color: var(--stamp-red);
         }
 
-        /* Stamps */
-        .stamp {
+        /* UI Overlay */
+        .ui-overlay {
             position: absolute;
-            font-family: 'Impact', 'Arial Black', sans-serif;
-            text-transform: uppercase;
-            font-weight: bold;
-            border: 4px solid;
-            padding: 0.5rem 1rem;
-            opacity: 0.6;
-            pointer-events: none;
+            top: 10px;
+            left: 10px;
+            color: #2c3e50;
+            font-size: 24px;
             z-index: 10;
-            user-select: none;
-            mix-blend-mode: multiply;
+            text-shadow: 2px 2px 0px rgba(255,255,255,0.5);
         }
 
-        .top-secret {
-            color: var(--stamp-red);
-            border-color: var(--stamp-red);
-            font-size: 2rem;
-            top: 3rem;
-            right: 3rem;
-            transform: rotate(-15deg);
-        }
-
-        .evidence {
-            color: var(--stamp-blue);
-            border-color: var(--stamp-blue);
-            font-size: 1.2rem;
-            bottom: 5rem;
-            left: 4rem;
-            transform: rotate(8deg);
-            border-radius: 5px;
-        }
-
-        /* Coffee stain */
-        .coffee-stain {
+        .score-display {
             position: absolute;
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            border: 10px solid rgba(139, 69, 19, 0.1);
-            top: 40%;
-            right: 8%;
-            transform: rotate(30deg);
-            opacity: 0.4;
-            pointer-events: none;
-            filter: blur(2px);
-            background: radial-gradient(circle, transparent 60%, rgba(139, 69, 19, 0.05) 70%, rgba(139, 69, 19, 0.2) 100%);
-        }
-
-        h1 {
-            font-family: 'Impact', 'Arial Black', sans-serif;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-bottom: 1rem;
-            color: var(--ink-black);
-        }
-
-        .subtitle {
-            font-family: 'Reenie Beanie', cursive;
-            font-size: 1.5rem;
-            color: var(--ink-blue);
-            margin-bottom: 2rem;
-        }
-
-        /* Instructions */
-        .instructions {
-            background-color: rgba(255, 255, 0, 0.1);
-            border: 1px dashed #999;
-            padding: 1rem;
-            margin-bottom: 2rem;
-            font-family: 'Reenie Beanie', cursive;
-            font-size: 1.4rem;
-            color: var(--ink-blue);
-            transform: rotate(-1deg);
-        }
-
-        /* Log text container */
-        #log-text {
-            font-size: 15px;
-            line-height: 2.2;
-            text-align: justify;
-            white-space: pre-wrap;
-            min-height: 300px;
-        }
-
-        /* The Redacted Block */
-        .blackout {
-            background-color: #000;
-            color: #000;
-            padding: 2px 0;
-            margin: 0 1px;
-            border-radius: 1px;
-            display: inline;
-            box-decoration-break: clone;
-            -webkit-box-decoration-break: clone;
-            cursor: crosshair;
-            transition: all 0.3s ease;
-        }
-
-        .blackout:hover {
-            background-color: #333;
-        }
-
-        /* The Revealed Words */
-        .revealed {
-            background-color: transparent;
-            font-weight: 700;
-            padding: 0 3px;
-            text-decoration: underline dotted #999 1px;
-            color: var(--ink-black);
-            animation: revealPulse 0.5s ease;
-        }
-
-        @keyframes revealPulse {
-            0% { background-color: rgba(255, 255, 0, 0.5); }
-            100% { background-color: transparent; }
-        }
-
-        /* Found/Clicked State */
-        .found {
-            background-color: rgba(46, 204, 113, 0.2);
-            border-bottom: 2px solid #27ae60;
-            padding: 0 3px;
-            font-weight: bold;
-        }
-
-        /* Footer */
-        .footer {
-            margin-top: 60px;
-            text-align: center;
-            font-size: 11px;
-            border-top: 1px solid #000;
-            padding-top: 10px;
-            color: #444;
-        }
-
-        /* Grainy overlay */
-        .texture {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
-            pointer-events: none;
-            z-index: 99;
-        }
-
-        /* Game Over Screen */
-        .game-over {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .game-over-content {
-            background: var(--paper-color);
-            padding: 3rem;
-            text-align: center;
-            border: 3px solid var(--stamp-red);
-            max-width: 500px;
-        }
-
-        .game-over h2 {
-            font-family: 'Impact', 'Arial Black', sans-serif;
-            font-size: 2.5rem;
-            color: var(--stamp-red);
-            margin-bottom: 1rem;
-        }
-
-        .final-score {
-            font-family: 'VT323', monospace;
-            font-size: 3rem;
-            color: var(--ink-black);
-            margin: 1rem 0;
-        }
-
-        .play-again {
-            background: var(--stamp-red);
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            font-family: 'Impact', 'Arial Black', sans-serif;
-            font-size: 1.2rem;
-            cursor: pointer;
-            text-transform: uppercase;
-            margin-top: 1rem;
-        }
-
-        .play-again:hover {
-            background: #a93226;
+            top: 10px;
+            right: 10px;
+            font-size: 48px;
+            color: #fff;
+            text-shadow: 3px 3px 0px #2c3e50;
+            z-index: 10;
         }
 
         /* Start Screen */
-        .start-screen {
-            position: fixed;
+        .start-screen, .game-over-screen {
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.85);
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 100;
+            color: white;
         }
 
-        .start-content {
-            background: var(--paper-color);
-            padding: 3rem;
-            text-align: center;
-            border: 3px solid var(--stamp-blue);
+        .start-screen h1 {
+            font-size: 64px;
+            color: #e74c3c;
+            text-shadow: 4px 4px 0px #c0392b;
+            margin-bottom: 20px;
+            letter-spacing: 4px;
+        }
+
+        .game-over-screen h2 {
+            font-size: 56px;
+            color: #e74c3c;
+            text-shadow: 4px 4px 0px #c0392b;
+            margin-bottom: 20px;
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
             max-width: 600px;
-            position: relative;
+            text-align: center;
+            margin: 20px 0;
         }
 
-        .start-content h1 {
-            font-size: 3rem;
-            color: var(--stamp-red);
-            margin-bottom: 1rem;
+        .instructions h3 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: #f39c12;
         }
 
-        .start-content p {
-            font-family: 'Courier New', Courier, monospace;
-            margin: 1rem 0;
+        .instructions p {
+            font-size: 24px;
             line-height: 1.6;
+            margin: 10px 0;
         }
 
-        .start-btn {
-            background: var(--stamp-blue);
+        .instructions .example {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 28px;
+            border-radius: 5px;
+        }
+
+        .avoid-example {
+            background: #fff;
+            color: #2c3e50;
+        }
+
+        .collect-example {
+            background: #000;
+            color: #000;
+            border: 2px solid #fff;
+        }
+
+        .btn {
+            background: #e74c3c;
             color: white;
             border: none;
-            padding: 1rem 2rem;
-            font-family: 'Impact', 'Arial Black', sans-serif;
-            font-size: 1.2rem;
+            padding: 20px 60px;
+            font-family: 'VT323', monospace;
+            font-size: 36px;
             cursor: pointer;
+            border-radius: 10px;
             text-transform: uppercase;
-            margin-top: 1rem;
+            letter-spacing: 3px;
+            box-shadow: 0 6px 0 #c0392b;
+            transition: all 0.1s;
+            margin-top: 30px;
         }
 
-        .start-btn:hover {
-            background: #2471a3;
+        .btn:hover {
+            background: #c0392b;
+            transform: translateY(2px);
+            box-shadow: 0 4px 0 #a93226;
+        }
+
+        .btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 #a93226;
+        }
+
+        .final-score {
+            font-size: 72px;
+            color: #f39c12;
+            margin: 20px 0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Mobile controls hint */
+        .mobile-hint {
+            position: absolute;
+            bottom: 20px;
+            font-size: 20px;
+            color: rgba(255,255,255,0.7);
         }
     </style>
 </head>
 <body>
-    <div class="texture"></div>
-    <div id="quote-layer"></div>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div class="ui-overlay">
+            <div>HIGH SCORE: <span id="highScore">0</span></div>
+        </div>
+        
+        <div class="score-display">
+            <span id="score">0</span>
+        </div>
 
-    <!-- Start Screen -->
-    <div class="start-screen" id="startScreen">
-        <div class="start-content">
-            <div class="stamp top-secret" style="position: relative; display: inline-block; margin-bottom: 1rem;">TOP SECRET</div>
+        <!-- Start Screen -->
+        <div class="start-screen" id="startScreen">
             <h1>CATCH TRUMPET</h1>
-            <p><strong>MISSION:</strong> Declassify the redacted documents by clicking on blacked-out words to reveal the truth.</p>
-            <p><strong>HOW TO PLAY:</strong></p>
-            <p style="text-align: left; padding-left: 2rem;">
-                • Click on <span style="background: #000; color: #000; padding: 0 5px;">REDACTED</span> words to reveal them<br>
-                • Score points for each word found<br>
-                • Find all hidden words before time runs out<br>
-                • Watch for the background quotes
+            <div class="instructions">
+                <h3>HOW TO PLAY</h3>
+                <p><strong>Press SPACE or CLICK to fly!</strong></p>
+                <p style="margin-top: 20px;">
+                    <span class="example avoid-example">REGULAR WORDS</span> = AVOID! ☠️
+                </p>
+                <p>
+                    <span class="example collect-example">██████</span> = COLLECT! ✓
+                </p>
+                <p style="margin-top: 15px; color: #3498db;">
+                    Touch the REDACTED black boxes for points<br>
+                    Avoid the white words or game over!
+                </p>
+            </div>
+            <button class="btn" onclick="startGame()">START GAME</button>
+            <p class="mobile-hint">Tap screen or press SPACE to jump</p>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div class="game-over-screen hidden" id="gameOverScreen">
+            <h2>GAME OVER</h2>
+            <div class="final-score">
+                SCORE: <span id="finalScore">0</span>
+            </div>
+            <p style="font-size: 28px; margin: 10px 0;">
+                Redacted Collected: <span id="collectedCount" style="color: #f39c12;">0</span>
             </p>
-            <p class="subtitle" style="margin-top: 1rem;">The truth is out there... if you can catch it.</p>
-            <button class="start-btn" onclick="startGame()">BEGIN MISSION</button>
-        </div>
-    </div>
-
-    <!-- Game Over Screen -->
-    <div class="game-over" id="gameOver">
-        <div class="game-over-content">
-            <div class="stamp evidence" style="position: relative; display: inline-block; margin-bottom: 1rem;">CASE CLOSED</div>
-            <h2 id="gameOverTitle">MISSION COMPLETE</h2>
-            <p>Words Found:</p>
-            <div class="final-score" id="finalScore">0</div>
-            <p id="gameOverMessage"></p>
-            <button class="play-again" onclick="resetGame()">NEW DOCUMENT</button>
-        </div>
-    </div>
-
-    <div class="document-container">
-        <div class="stamp top-secret">TOP SECRET</div>
-        <div class="stamp evidence" id="evidenceStamp">EVIDENCE</div>
-        <div class="coffee-stain"></div>
-
-        <div class="game-header">
-            <div class="header-col">
-                <span>UNITED STATES DISTRICT COURT</span>
-                <span>SOUTHERN DISTRICT OF NEW YORK</span>
-                <span>EXHIBIT NO: <span id="exhibit-id"></span></span>
-            </div>
-            <div class="header-col">
-                <span>DATE: <span id="doc-date"></span></span>
-                <span>STATUS: REDACTED</span>
-            </div>
-            <div class="score-board">
-                <span>WORDS: <span id="foundCount">0</span>/<span id="totalCount">0</span></span>
-                <span>SCORE: <span id="score">0</span></span>
-                <span>TIME: <span id="timer">60</span>s</span>
-            </div>
-        </div>
-
-        <h1>CLASSIFIED INTELLIGENCE REPORT</h1>
-        <div class="subtitle">Click the redacted words to reveal the truth...</div>
-
-        <div class="instructions">
-            <strong>HOW TO PLAY:</strong> Click on the blacked-out sections to reveal hidden words. Find as many as you can before time runs out!
-        </div>
-
-        <div id="log-text"></div>
-
-        <div class="footer">
-            CASE 1:19-cr-00490-RMB Document 22 Filed 07/08/19 | Click anywhere to regenerate document
+            <button class="btn" onclick="restartGame()">TRY AGAIN</button>
         </div>
     </div>
 
     <script>
-        // Game State
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameState = 'start'; // start, playing, gameover
         let score = 0;
-        let foundWords = 0;
-        let totalWords = 0;
-        let timeLeft = 60;
-        let gameInterval;
-        let isPlaying = false;
+        let highScore = localStorage.getItem('catchTrumpetHighScore') || 0;
+        let collectedRedacted = 0;
+        let frameCount = 0;
+        let gameSpeed = 3;
+        
+        // Update high score display
+        document.getElementById('highScore').textContent = highScore;
 
-        /* EXACT QUOTES FROM AG BONDI */
-        const terribleQuotes = [
-            "I WILL NOT GET IN THE GUTTER FOR HER THEATRICS.",
-            "YOU'RE A WASHED-UP, LOSER LAWYER.",
-            "THERE IS NO INCRIMINATING CLIENT LIST.",
-            "I AM NOT GOING TO HAVE IT.",
-            "YOU SIT HERE AND YOU ATTACK THE PRESIDENT.",
-            "THIS IS SO RIDICULOUS.",
-            "WE HAVE DONE OUR VERY BEST.",
-            "IT IS A LOW ERROR RATE.",
-            "IF A VICTIM'S NAME WAS UNREDACTED, BRING IT TO US.",
-            "I'M NOT GOING TO PUT UP WITH IT.",
-            "THAT IS A POLITICAL STUNT.",
-            "WE FOLLOWED THE LAW.",
-            "IT WAS PROCESSED VERY QUICKLY."
+        // Word banks
+        const regularWords = [
+            "Island", "Estate", "Ranch", "Palm Beach", "Paris", "Manhattan",
+            "Gulfstream", "Boeing", "Pilot", "Flight", "JFK", "Passenger",
+            "Trust", "Fund", "Bank", "Wire", "Transfer", "Account",
+            "Meeting", "Schedule", "Email", "Document", "Memo",
+            "Secretary", "Assistant", "Manager", "Lunch", "Dinner",
+            "Camera", "Video", "Photo", "Phone", "Laptop"
         ];
 
-        /* EXTENDED WORD BANK */
-        const wordBank = [
-            "Island", "Estate", "Ranch", "Palm Beach", "New Mexico", "Zorro", "Paris",
-            "Manhattan", "Townhouse", "Mansion", "Lodge", "Cabin", "Harbor", "Port",
-            "Dock", "Hangar", "Studio", "Apartment", "Suite", "71st Street",
-            "Virgin Islands", "St. Thomas", "Little St. James", "Residence",
-            "Gulfstream", "Boeing", "727", "Helicopter", "Pilot", "Copilot", "Captain",
-            "Flight", "Log", "Manifest", "Departure", "Arrival", "Teterboro", "JFK",
-            "Fuel", "Maintenance", "Avionics", "Landing", "Takeoff", "Runway", "Taxi",
-            "Passenger", "Trip", "Route", "Altitude", "Weather", "Clearance",
-            "Customs", "Passport", "Visa", "Luggage", "Baggage", "Cargo",
-            "Trust", "Fund", "Foundation", "Bank", "Deutsche", "Morgan", "Chase",
-            "Wire", "Transfer", "Deposit", "Withdrawal", "Account", "Ledger", "Balance",
-            "Asset", "Liability", "Tax", "Invoice", "Receipt", "Check", "Cash",
-            "Currency", "Offshore", "Shell", "LLC", "Incorporated", "Partner",
-            "Agreement", "Contract", "NDA", "Settlement", "Lawyer", "Attorney",
-            "Counsel", "Judge", "Court", "Motion", "Filing", "Affidavit",
-            "Deposition", "Subpoena", "Audit", "Fee", "Retainer",
-            "Meeting", "Schedule", "Calendar", "Appointment", "Conference", "Call",
-            "Email", "Fax", "Letter", "Memo", "Note", "Message", "Regarding", "Re:",
-            "Subject", "Attachment", "File", "Document", "Copy", "Original", "Draft",
-            "Review", "Approve", "Sign", "Signature", "Notary", "Secretary",
-            "Assistant", "Manager", "Director", "Staff", "Employee", "Recruit",
-            "Interview", "Resume", "Referral", "Introduction", "Dinner", "Lunch",
-            "Invitation", "Guest", "Visitor", "Client",
-            "Massage", "Table", "Room", "Door", "Gate", "Key", "Code", "Access",
-            "Security", "Camera", "Tape", "Video", "Photo", "Computer", "Server",
-            "Phone", "Mobile", "Laptop", "Drive", "Disk", "Painting", "Art",
-            "Sculpture", "Furniture", "Rug", "Curtain", "Design", "Renovation",
-            "Construction", "Architect", "Builder", "Plan", "Blueprint"
+        const redactedWords = [
+            "Epstein", "Maxwell", "Clinton", "Trump", "Andrew",
+            "Flight Logs", "Little Black Book", "Victim Names", "Client List",
+            "Island Visits", "Private Jet", "Lolita Express", "Pedophile",
+            "Sex Trafficking", "Underage Girls", "Massage", "Recruitment",
+            "NDA Settlement", "Legal Threats", "Cover Up"
         ];
 
-        const fillerChars = "abcdefghijklmnopqrstuvwxyz1234567890";
+        // Player (Trumpet character)
+        const player = {
+            x: 150,
+            y: 300,
+            width: 40,
+            height: 30,
+            velocity: 0,
+            gravity: 0.5,
+            jumpStrength: -10,
+            rotation: 0,
+            emoji: '🎺'
+        };
 
-        function getRandomInt(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
+        // Obstacles array
+        let obstacles = [];
+        let redactedItems = [];
+        let particles = [];
+
+        // Background clouds
+        let clouds = [];
+        for (let i = 0; i < 5; i++) {
+            clouds.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * 200,
+                speed: 0.5 + Math.random() * 0.5,
+                size: 30 + Math.random() * 20
+            });
         }
 
-        function generateHeaderData() {
-            document.getElementById('exhibit-id').innerText =
-                `GX-${getRandomInt(100, 999)}-${String.fromCharCode(65+getRandomInt(0,25))}`;
-
-            const year = getRandomInt(2002, 2018);
-            const month = getRandomInt(1, 12).toString().padStart(2, '0');
-            const day = getRandomInt(1, 28).toString().padStart(2, '0');
-            document.getElementById('doc-date').innerText = `${month}/${day}/${year}`;
-
-            document.getElementById('evidenceStamp').innerText = `EVIDENCE #${getRandomInt(1, 999)}`;
-        }
-
-        function generateGibberish(length) {
-            let result = '';
-            for (let i = 0; i < length; i++) {
-                result += fillerChars.charAt(Math.floor(Math.random() * fillerChars.length));
-            }
-            return result;
-        }
-
-        function generateBackgroundQuotes() {
-            const layer = document.getElementById('quote-layer');
-            layer.innerHTML = '';
-
-            const numberOfQuotes = 15;
-            const pageHeight = window.innerHeight;
-            const pageWidth = window.innerWidth;
-
-            for (let i = 0; i < numberOfQuotes; i++) {
-                const span = document.createElement('span');
-                span.classList.add('bg-quote');
-                span.innerText = terribleQuotes[Math.floor(Math.random() * terribleQuotes.length)];
-
-                const top = Math.floor(Math.random() * pageHeight);
-                const left = Math.floor(Math.random() * (pageWidth - 200));
-                const rotate = Math.floor(Math.random() * 90) - 45;
-                const scale = 0.8 + Math.random() * 1.5;
-
-                span.style.top = `${top}px`;
-                span.style.left = `${left}px`;
-                span.style.transform = `rotate(${rotate}deg) scale(${scale})`;
-
-                layer.appendChild(span);
+        // Input handling
+        function jump() {
+            if (gameState === 'playing') {
+                player.velocity = player.jumpStrength;
             }
         }
 
-        function createRedactedText() {
-            const container = document.getElementById('log-text');
-            container.innerHTML = '';
-
-            const wordCount = getRandomInt(80, 120);
-            totalWords = 0;
-            foundWords = 0;
-
-            // Generate paragraphs
-            let wordsInParagraph = 0;
-            let paragraph = document.createElement('p');
-            paragraph.style.marginBottom = '1rem';
-
-            for (let i = 0; i < wordCount; i++) {
-                const isRevealed = Math.random() < 0.15; // 15% chance to be clickable
-
-                if (isRevealed) {
-                    totalWords++;
-                    const word = wordBank[Math.floor(Math.random() * wordBank.length)];
-                    const span = document.createElement('span');
-                    span.classList.add('blackout');
-                    span.dataset.word = word;
-                    span.dataset.found = 'false';
-                    span.innerText = generateGibberish(word.length);
-                    span.onclick = function(e) {
-                        e.stopPropagation();
-                        revealWord(this);
-                    };
-                    paragraph.appendChild(span);
-                    paragraph.appendChild(document.createTextNode(' '));
-                } else {
-                    const blockLen = getRandomInt(3, 11);
-                    const junk = generateGibberish(blockLen);
-                    const span = document.createElement('span');
-                    span.classList.add('blackout');
-                    span.style.cursor = 'default';
-                    span.innerText = junk;
-                    paragraph.appendChild(span);
-                    paragraph.appendChild(document.createTextNode(' '));
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (gameState === 'start') {
+                    startGame();
+                } else if (gameState === 'playing') {
+                    jump();
+                } else if (gameState === 'gameover') {
+                    restartGame();
                 }
-
-                wordsInParagraph++;
-
-                // New paragraph every 15-25 words
-                if (wordsInParagraph >= getRandomInt(15, 25)) {
-                    container.appendChild(paragraph);
-                    paragraph = document.createElement('p');
-                    paragraph.style.marginBottom = '1rem';
-                    wordsInParagraph = 0;
-                }
-            }
-
-            // Append last paragraph
-            if (wordsInParagraph > 0) {
-                container.appendChild(paragraph);
-            }
-
-            updateScoreBoard();
-        }
-
-        function revealWord(element) {
-            if (element.dataset.found === 'true' || !isPlaying) return;
-
-            const word = element.dataset.word;
-            element.innerText = word;
-            element.classList.remove('blackout');
-            element.classList.add('found');
-            element.dataset.found = 'true';
-
-            foundWords++;
-            score += 10;
-            updateScoreBoard();
-
-            // Check if all words found
-            if (foundWords >= totalWords) {
-                endGame(true);
-            }
-        }
-
-        function updateScoreBoard() {
-            document.getElementById('foundCount').innerText = foundWords;
-            document.getElementById('totalCount').innerText = totalWords;
-            document.getElementById('score').innerText = score;
-            document.getElementById('timer').innerText = timeLeft;
-        }
-
-        function startTimer() {
-            gameInterval = setInterval(() => {
-                timeLeft--;
-                updateScoreBoard();
-
-                if (timeLeft <= 0) {
-                    endGame(false);
-                }
-            }, 1000);
-        }
-
-        function startGame() {
-            document.getElementById('startScreen').style.display = 'none';
-            isPlaying = true;
-            score = 0;
-            foundWords = 0;
-            timeLeft = 60;
-
-            generateHeaderData();
-            createRedactedText();
-            generateBackgroundQuotes();
-            startTimer();
-        }
-
-        function endGame(won) {
-            isPlaying = false;
-            clearInterval(gameInterval);
-
-            const gameOverScreen = document.getElementById('gameOver');
-            const title = document.getElementById('gameOverTitle');
-            const message = document.getElementById('gameOverMessage');
-
-            if (won) {
-                title.innerText = 'MISSION ACCOMPLISHED';
-                title.style.color = '#27ae60';
-                message.innerText = `Excellent work! You declassified the entire document with ${timeLeft} seconds to spare!`;
-            } else {
-                title.innerText = 'MISSION FAILED';
-                title.style.color = '#c0392b';
-                message.innerText = `Time's up! You found ${foundWords} out of ${totalWords} hidden words.`;
-            }
-
-            document.getElementById('finalScore').innerText = score;
-            gameOverScreen.style.display = 'flex';
-        }
-
-        function resetGame() {
-            document.getElementById('gameOver').style.display = 'none';
-            isPlaying = true;
-            score = 0;
-            foundWords = 0;
-            timeLeft = 60;
-
-            generateHeaderData();
-            createRedactedText();
-            generateBackgroundQuotes();
-            startTimer();
-        }
-
-        // Click outside to regenerate (only when not playing)
-        document.body.addEventListener('click', (e) => {
-            if (!isPlaying && e.target === document.body) {
-                generateBackgroundQuotes();
             }
         });
 
-        // Initial background quotes
-        generateBackgroundQuotes();
+        canvas.addEventListener('mousedown', () => {
+            if (gameState === 'playing') jump();
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameState === 'playing') {
+                jump();
+            }
+        });
+
+        // Spawn obstacles
+        function spawnObstacle() {
+            const word = regularWords[Math.floor(Math.random() * regularWords.length)];
+            const y = Math.random() * (canvas.height - 100) + 50;
+            
+            obstacles.push({
+                x: canvas.width,
+                y: y,
+                word: word,
+                width: ctx.measureText(word).width + 20,
+                height: 40,
+                passed: false
+            });
+        }
+
+        // Spawn redacted items
+        function spawnRedacted() {
+            const word = redactedWords[Math.floor(Math.random() * redactedWords.length)];
+            const y = Math.random() * (canvas.height - 100) + 50;
+            
+            redactedItems.push({
+                x: canvas.width,
+                y: y,
+                word: word,
+                width: 120,
+                height: 40,
+                collected: false
+            });
+        }
+
+        // Create particles
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 8; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    life: 30,
+                    color: color
+                });
+            }
+        }
+
+        // Update game
+        function update() {
+            if (gameState !== 'playing') return;
+
+            frameCount++;
+
+            // Update player
+            player.velocity += player.gravity;
+            player.y += player.velocity;
+            player.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, player.velocity * 0.05));
+
+            // Check boundaries
+            if (player.y < 0) {
+                player.y = 0;
+                player.velocity = 0;
+            }
+            if (player.y > canvas.height - player.height) {
+                gameOver();
+            }
+
+            // Update clouds
+            clouds.forEach(cloud => {
+                cloud.x -= cloud.speed;
+                if (cloud.x < -100) {
+                    cloud.x = canvas.width + 100;
+                    cloud.y = Math.random() * 200;
+                }
+            });
+
+            // Spawn obstacles and redacted items
+            if (frameCount % 90 === 0) {
+                if (Math.random() < 0.7) spawnObstacle();
+            }
+            if (frameCount % 120 === 0) {
+                spawnRedacted();
+            }
+
+            // Update obstacles
+            obstacles = obstacles.filter(obs => {
+                obs.x -= gameSpeed;
+
+                // Check collision with player
+                if (!obs.passed &&
+                    player.x < obs.x + obs.width &&
+                    player.x + player.width > obs.x &&
+                    player.y < obs.y + obs.height &&
+                    player.y + player.height > obs.y) {
+                    gameOver();
+                }
+
+                return obs.x > -200;
+            });
+
+            // Update redacted items
+            redactedItems = redactedItems.filter(item => {
+                if (item.collected) return false;
+                
+                item.x -= gameSpeed;
+
+                // Check collection
+                if (player.x < item.x + item.width &&
+                    player.x + player.width > item.x &&
+                    player.y < item.y + item.height &&
+                    player.y + player.height > item.y) {
+                    
+                    item.collected = true;
+                    score += 50;
+                    collectedRedacted++;
+                    createParticles(item.x + item.width/2, item.y + item.height/2, '#f39c12');
+                    document.getElementById('score').textContent = score;
+                    
+                    // Speed up slightly
+                    if (collectedRedacted % 5 === 0) {
+                        gameSpeed += 0.2;
+                    }
+                    
+                    return false;
+                }
+
+                return item.x > -200;
+            });
+
+            // Update particles
+            particles = particles.filter(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                return p.life > 0;
+            });
+        }
+
+        // Draw game
+        function draw() {
+            // Clear canvas
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw gradient sky
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(1, '#E0F6FF');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw clouds
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            clouds.forEach(cloud => {
+                ctx.beginPath();
+                ctx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
+                ctx.arc(cloud.x + cloud.size * 0.5, cloud.y - cloud.size * 0.2, cloud.size * 0.8, 0, Math.PI * 2);
+                ctx.arc(cloud.x - cloud.size * 0.5, cloud.y - cloud.size * 0.1, cloud.size * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            if (gameState === 'playing' || gameState === 'gameover') {
+                // Draw obstacles (regular words - WHITE, avoid these!)
+                ctx.font = 'bold 24px "VT323", monospace';
+                ctx.textAlign = 'center';
+                obstacles.forEach(obs => {
+                    // Word background
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(obs.x - 10, obs.y - 10, ctx.measureText(obs.word).width + 20, 40);
+                    
+                    // Word border
+                    ctx.strokeStyle = '#2c3e50';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(obs.x - 10, obs.y - 10, ctx.measureText(obs.word).width + 20, 40);
+                    
+                    // Word text
+                    ctx.fillStyle = '#2c3e50';
+                    ctx.fillText(obs.word, obs.x + ctx.measureText(obs.word).width / 2, obs.y + 20);
+                });
+
+                // Draw redacted items (BLACK boxes - collect these!)
+                redactedItems.forEach(item => {
+                    if (!item.collected) {
+                        // Black redacted box
+                        ctx.fillStyle = '#000';
+                        ctx.fillRect(item.x, item.y, item.width, item.height);
+                        
+                        // Border
+                        ctx.strokeStyle = '#e74c3c';
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(item.x, item.y, item.width, item.height);
+                        
+                        // Glow effect
+                        ctx.shadowColor = '#e74c3c';
+                        ctx.shadowBlur = 10;
+                        ctx.shadowBlur = 0;
+                    }
+                });
+
+                // Draw player (Trumpet emoji)
+                ctx.save();
+                ctx.translate(player.x + player.width/2, player.y + player.height/2);
+                ctx.rotate(player.rotation);
+                ctx.font = '40px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(player.emoji, 0, 0);
+                ctx.restore();
+
+                // Draw particles
+                particles.forEach(p => {
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.life / 30;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                });
+            }
+        }
+
+        // Game loop
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start game
+        function startGame() {
+            gameState = 'playing';
+            score = 0;
+            collectedRedacted = 0;
+            frameCount = 0;
+            gameSpeed = 3;
+            
+            player.y = 300;
+            player.velocity = 0;
+            
+            obstacles = [];
+            redactedItems = [];
+            particles = [];
+            
+            document.getElementById('score').textContent = '0';
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+        }
+
+        // Game over
+        function gameOver() {
+            gameState = 'gameover';
+            
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('catchTrumpetHighScore', highScore);
+                document.getElementById('highScore').textContent = highScore;
+            }
+            
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('collectedCount').textContent = collectedRedacted;
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+
+        // Restart game
+        function restartGame() {
+            startGame();
+        }
+
+        // Start game loop
+        gameLoop();
     </script>
 </body>
 </html>
