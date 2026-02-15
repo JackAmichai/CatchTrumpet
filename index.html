@@ -391,6 +391,118 @@
             0%, 100% { transform: translateX(-50%) rotate(-2deg); }
             50% { transform: translateX(-50%) rotate(2deg); }
         }
+
+        /* Memorial Container - HONORING SURVIVORS */
+        #memorial-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(to top, #000000 90%, transparent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Georgia', serif;
+            color: #ccc;
+            z-index: 1000;
+            pointer-events: none;
+            padding-bottom: 20px;
+        }
+
+        /* The Candle Container */
+        .candle-wrapper {
+            position: relative;
+            width: 30px;
+            height: 60px;
+            margin-right: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        /* Candle Body */
+        .candle-stick {
+            width: 14px;
+            height: 40px;
+            background: #e8e8e8;
+            border-radius: 2px;
+            box-shadow: inset -3px -3px 5px rgba(0,0,0,0.1);
+        }
+
+        /* Candle Wick */
+        .wick {
+            width: 2px;
+            height: 6px;
+            background: #333;
+            margin-bottom: -2px;
+        }
+
+        /* The Flame */
+        .flame {
+            width: 10px;
+            height: 20px;
+            background: radial-gradient(ellipse at bottom, #ffee00 0%, #ff6a00 100%);
+            border-radius: 50% 50% 20% 20%;
+            animation: flicker 0.15s infinite alternate;
+            box-shadow: 0 0 10px #ff6a00, 0 0 20px #ff6a00;
+            transform-origin: center bottom;
+        }
+
+        /* Flame Animation */
+        @keyframes flicker {
+            0% { transform: scale(1) rotate(-1deg); opacity: 0.9; }
+            100% { transform: scale(1.1) rotate(1deg); opacity: 1; height: 22px; }
+        }
+
+        /* Text Section */
+        .memorial-text {
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.5;
+            opacity: 0.8;
+            text-shadow: 0 0 5px rgba(0,0,0,0.8);
+        }
+
+        .memorial-header {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #888;
+            margin-bottom: 4px;
+            border-bottom: 1px solid #444;
+            display: inline-block;
+            padding-bottom: 2px;
+        }
+
+        /* Scrolling Names */
+        .scroller {
+            height: 24px;
+            overflow: hidden;
+            position: relative;
+            width: 300px;
+        }
+
+        .scroller-content {
+            position: absolute;
+            width: 100%;
+            animation: scrollNames 20s linear infinite;
+        }
+
+        .victim-name {
+            display: block;
+            height: 24px;
+            color: #fff;
+            font-style: italic;
+        }
+
+        @keyframes scrollNames {
+            0% { transform: translateY(24px); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100%); opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -1374,6 +1486,53 @@
 
         // Start game loop
         gameLoop();
+    </script>
+    <!-- Memorial Container - HONORING SURVIVORS -->
+    <div id="memorial-container">
+        <div class="candle-wrapper">
+            <div class="flame"></div>
+            <div class="wick"></div>
+            <div class="candle-stick"></div>
+        </div>
+        
+        <div class="memorial-text">
+            <div class="memorial-header">WE REMEMBER THE SURVIVORS</div>
+            <div class="scroller">
+                <div class="scroller-content" id="victim-list">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // List of brave women who have come forward publicly
+        const survivors = [
+            "Virginia Giuffre",
+            "Sarah Ransome",
+            "Maria Farmer",
+            "Annie Farmer",
+            "Courtney Wild",
+            "Juliette Bryant",
+            "Michelle Licata",
+            "Chauntae Davies",
+            "Teala Davies",
+            "Jennifer Araoz",
+            "Rina Oh",
+            "Haley Robson",
+            "And the many Jane Does..."
+        ];
+
+        const listContainer = document.getElementById('victim-list');
+        
+        survivors.forEach(name => {
+            const div = document.createElement('div');
+            div.className = 'victim-name';
+            div.textContent = name;
+            listContainer.appendChild(div);
+        });
+
+        const duration = survivors.length * 2.5;
+        listContainer.style.animationDuration = `${duration}s`;
     </script>
 </body>
 </html>
