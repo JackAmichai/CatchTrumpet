@@ -555,14 +555,13 @@
             glow: true
         };
 
-        // Trump boss
+        // Trump boss - SMALLER and attacks
         const trump = {
-            x: -200,
-            y: 325,
-            width: 80,
-            height: 80,
-            speed: 5,
-            emoji: '🤬',
+            x: -150,
+            y: 280,
+            width: 70,
+            height: 90,
+            speed: 4,
             active: false
         };
 
@@ -693,12 +692,13 @@
             });
         }
 
-        // Activate Trump
+        // Activate Trump - SMALLER but faster attacker
         function activateTrump() {
             trumpActive = true;
             trump.active = true;
-            trump.x = -150;
-            trump.y = player.y;
+            trump.x = -120;
+            // Random Y position near player but avoidable
+            trump.y = 150 + Math.random() * (canvas.height - 350);
             trumpEncounters++;
             
             // Show warning
@@ -707,7 +707,7 @@
             
             setTimeout(() => {
                 warning.classList.add('hidden');
-            }, 2000);
+            }, 1500);
         }
 
         // Create particles
@@ -880,16 +880,24 @@
                 }
             }
 
-            // Update Trump
+            // Update Trump - SMALLER collision box but aggressive tracking
             if (trumpActive) {
                 trump.x += trump.speed;
                 
-                // Trump follows player vertically (with delay)
-                const targetY = player.y - 15;
-                trump.y += (targetY - trump.y) * 0.05;
+                // Trump aggressively tracks player (faster than before)
+                const targetY = player.y;
+                trump.y += (targetY - trump.y) * 0.08;
                 
-                // Collision with Trump
-                if (checkCollision(player, trump)) {
+                // Smaller collision box for Trump (more forgiving)
+                const trumpHitbox = {
+                    x: trump.x + 10,
+                    y: trump.y + 10,
+                    width: trump.width - 20,
+                    height: trump.height - 20
+                };
+                
+                // Collision with Trump - use smaller hitbox
+                if (checkCollision(player, trumpHitbox)) {
                     createParticles(player.x + player.width/2, player.y + player.height/2, '#e74c3c', 30);
                     gameOver();
                 }
@@ -900,7 +908,7 @@
                     trump.active = false;
                     score += 500; // Bonus for surviving Trump
                     document.getElementById('score').textContent = score;
-                    createParticles(canvas.width - 50, trump.y + 40, '#27ae60', 20);
+                    createParticles(canvas.width - 50, trump.y + trump.height/2, '#27ae60', 20);
                 }
             }
 
@@ -1079,26 +1087,153 @@
                     }
                 });
 
-                // Draw Trump
+                // Draw Trump - REALISTIC SMALLER VERSION
                 if (trumpActive) {
-                    ctx.font = '70px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    
-                    // Angry effect
                     ctx.save();
-                    ctx.translate(trump.x + trump.width/2, trump.y + trump.height/2);
-                    const shake = Math.sin(frameCount * 0.5) * 3;
-                    ctx.rotate(shake * Math.PI / 180);
-                    ctx.fillText(trump.emoji, 0, 0);
-                    ctx.restore();
+                    const centerX = trump.x + trump.width/2;
+                    const centerY = trump.y + trump.height/2;
                     
-                    // Angry aura
-                    ctx.strokeStyle = 'rgba(231, 76, 60, 0.5)';
+                    // Shake effect
+                    const shakeX = Math.sin(frameCount * 0.3) * 4;
+                    const shakeY = Math.cos(frameCount * 0.4) * 3;
+                    ctx.translate(centerX + shakeX, centerY + shakeY);
+                    
+                    // Angry red glow behind
+                    const gradient = ctx.createRadialGradient(0, 0, 10, 0, 0, 60);
+                    gradient.addColorStop(0, 'rgba(255, 0, 0, 0.4)');
+                    gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 60, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Draw realistic Trump face (cartoon style but detailed)
+                    const scale = 0.7;
+                    ctx.scale(scale, scale);
+                    
+                    // Face shape - orange tint
+                    ctx.fillStyle = '#FFB347';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 50, 55, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Face outline
+                    ctx.strokeStyle = '#CC8030';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Hair - distinctive blonde/yellow
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.moveTo(-50, -20);
+                    ctx.quadraticCurveTo(-30, -55, 0, -50);
+                    ctx.quadraticCurveTo(30, -55, 50, -20);
+                    ctx.quadraticCurveTo(45, -10, 40, -15);
+                    ctx.quadraticCurveTo(20, -40, 0, -35);
+                    ctx.quadraticCurveTo(-20, -40, -40, -15);
+                    ctx.quadraticCurveTo(-45, -10, -50, -20);
+                    ctx.fill();
+                    
+                    // Eyebrows - angry
+                    ctx.strokeStyle = '#8B6914';
+                    ctx.lineWidth = 4;
+                    ctx.lineCap = 'round';
+                    // Left eyebrow
+                    ctx.beginPath();
+                    ctx.moveTo(-35, -20);
+                    ctx.lineTo(-10, -25);
+                    ctx.stroke();
+                    // Right eyebrow  
+                    ctx.beginPath();
+                    ctx.moveTo(10, -25);
+                    ctx.lineTo(35, -20);
+                    ctx.stroke();
+                    
+                    // Eyes - angry narrowed
+                    ctx.fillStyle = '#FFF';
+                    ctx.beginPath();
+                    ctx.ellipse(-22, -10, 12, 8, 0, 0, Math.PI * 2);
+                    ctx.ellipse(22, -10, 12, 8, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Pupils
+                    ctx.fillStyle = '#000';
+                    ctx.beginPath();
+                    ctx.arc(-22, -10, 5, 0, Math.PI * 2);
+                    ctx.arc(22, -10, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Angry eyebrows over eyes
+                    ctx.strokeStyle = '#8B6914';
                     ctx.lineWidth = 3;
                     ctx.beginPath();
-                    ctx.arc(trump.x + trump.width/2, trump.y + trump.height/2, 50 + Math.sin(frameCount * 0.2) * 5, 0, Math.PI * 2);
+                    ctx.moveTo(-35, -22);
+                    ctx.lineTo(-10, -18);
+                    ctx.moveTo(10, -18);
+                    ctx.lineTo(35, -22);
                     ctx.stroke();
+                    
+                    // Nose
+                    ctx.strokeStyle = '#CC8030';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -5);
+                    ctx.lineTo(-5, 15);
+                    ctx.lineTo(0, 18);
+                    ctx.lineTo(5, 15);
+                    ctx.stroke();
+                    
+                    // Mouth - angry frown
+                    ctx.strokeStyle = '#CC0000';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(-20, 30);
+                    ctx.quadraticCurveTo(0, 22, 20, 30);
+                    ctx.stroke();
+                    
+                    // Teeth
+                    ctx.fillStyle = '#FFF';
+                    ctx.fillRect(-15, 26, 30, 6);
+                    ctx.strokeStyle = '#CC0000';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(-15, 26, 30, 6);
+                    
+                    // Tie - red
+                    ctx.fillStyle = '#CC0000';
+                    ctx.beginPath();
+                    ctx.moveTo(0, 50);
+                    ctx.lineTo(-15, 110);
+                    ctx.lineTo(0, 100);
+                    ctx.lineTo(15, 110);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#990000';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    
+                    // Suit collar
+                    ctx.fillStyle = '#FFF';
+                    ctx.beginPath();
+                    ctx.moveTo(-25, 50);
+                    ctx.lineTo(0, 70);
+                    ctx.lineTo(25, 50);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Suit
+                    ctx.fillStyle = '#000033';
+                    ctx.beginPath();
+                    ctx.moveTo(-50, 50);
+                    ctx.lineTo(-25, 50);
+                    ctx.lineTo(0, 70);
+                    ctx.lineTo(25, 50);
+                    ctx.lineTo(50, 50);
+                    ctx.lineTo(50, 110);
+                    ctx.lineTo(-50, 110);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.restore();
                 }
 
                 // Draw player (Magnifying glass) - BIGGER AND GLOWING
