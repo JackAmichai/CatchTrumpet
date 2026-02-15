@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CATCH TRUMPET - Flappy Bird Style</title>
+    <title>CATCH TRUMPET - Epstein Files Edition</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Special+Elite&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -15,210 +15,405 @@
         }
 
         body {
-            background-color: #1a1a2e;
+            background-color: #2c2416;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            font-family: 'VT323', monospace;
+            font-family: 'Courier Prime', monospace;
             overflow: hidden;
         }
 
         #gameContainer {
             position: relative;
-            width: 800px;
-            height: 600px;
-            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 100%);
-            border: 4px solid #2c3e50;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            width: 900px;
+            height: 650px;
+            background: #f5f5dc;
+            border: 8px solid #3d3429;
+            box-shadow: 
+                0 0 0 2px #5c4d3c,
+                0 0 30px rgba(0,0,0,0.8),
+                inset 0 0 100px rgba(139, 119, 101, 0.3);
             overflow: hidden;
+        }
+
+        /* Paper texture overlay */
+        .paper-texture {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(139, 119, 101, 0.03) 2px,
+                    rgba(139, 119, 101, 0.03) 4px
+                ),
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1;
         }
 
         #gameCanvas {
             display: block;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Header stamps */
+        .header-stamps {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .stamp {
+            font-family: 'Special Elite', cursive;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 3px solid;
+            padding: 5px 15px;
+            opacity: 0.7;
+            transform: rotate(-5deg);
+            font-size: 14px;
+            letter-spacing: 2px;
+        }
+
+        .stamp.top-secret {
+            color: #c0392b;
+            border-color: #c0392b;
+        }
+
+        .stamp.classified {
+            color: #8b4513;
+            border-color: #8b4513;
+            transform: rotate(3deg);
         }
 
         /* UI Overlay */
         .ui-overlay {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            color: #2c3e50;
-            font-size: 24px;
+            top: 60px;
+            left: 20px;
+            color: #3d3429;
+            font-size: 18px;
             z-index: 10;
-            text-shadow: 2px 2px 0px rgba(255,255,255,0.5);
+            font-family: 'Special Elite', cursive;
         }
 
         .score-display {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 48px;
-            color: #fff;
-            text-shadow: 3px 3px 0px #2c3e50;
+            top: 60px;
+            right: 20px;
+            font-size: 36px;
+            color: #c0392b;
+            font-family: 'Special Elite', cursive;
+            font-weight: bold;
+            z-index: 10;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+        }
+
+        .progress-bar {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            width: 150px;
+            height: 20px;
+            background: rgba(0,0,0,0.1);
+            border: 2px solid #3d3429;
             z-index: 10;
         }
 
-        /* Start Screen */
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #f39c12, #e74c3c);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-label {
+            position: absolute;
+            top: 125px;
+            right: 20px;
+            font-size: 12px;
+            color: #3d3429;
+            font-family: 'Special Elite', cursive;
+            z-index: 10;
+        }
+
+        /* Screens */
         .start-screen, .game-over-screen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(245, 245, 220, 0.95);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 100;
-            color: white;
+            color: #3d3429;
         }
 
         .start-screen h1 {
-            font-size: 64px;
-            color: #e74c3c;
-            text-shadow: 4px 4px 0px #c0392b;
-            margin-bottom: 20px;
+            font-family: 'Special Elite', cursive;
+            font-size: 48px;
+            color: #c0392b;
+            margin-bottom: 10px;
+            text-transform: uppercase;
             letter-spacing: 4px;
+            border-bottom: 4px solid #c0392b;
+            padding-bottom: 10px;
+        }
+
+        .subtitle {
+            font-family: 'Courier Prime', monospace;
+            font-size: 18px;
+            color: #5c4d3c;
+            margin-bottom: 30px;
+            font-style: italic;
         }
 
         .game-over-screen h2 {
-            font-size: 56px;
-            color: #e74c3c;
-            text-shadow: 4px 4px 0px #c0392b;
+            font-family: 'Special Elite', cursive;
+            font-size: 42px;
+            color: #c0392b;
             margin-bottom: 20px;
         }
 
         .instructions {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 30px;
-            border-radius: 10px;
-            max-width: 600px;
+            background: rgba(139, 119, 101, 0.1);
+            border: 2px dashed #8b7355;
+            padding: 25px;
+            max-width: 550px;
             text-align: center;
             margin: 20px 0;
         }
 
         .instructions h3 {
-            font-size: 32px;
+            font-family: 'Special Elite', cursive;
+            font-size: 24px;
             margin-bottom: 15px;
-            color: #f39c12;
+            color: #8b4513;
         }
 
         .instructions p {
-            font-size: 24px;
+            font-size: 16px;
             line-height: 1.6;
             margin: 10px 0;
+            color: #3d3429;
         }
 
-        .instructions .example {
-            display: inline-block;
-            margin: 10px;
+        .example-row {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 15px 0;
+        }
+
+        .example {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .example-box {
             padding: 10px 20px;
-            font-size: 28px;
-            border-radius: 5px;
+            font-size: 16px;
+            border: 2px solid;
         }
 
-        .avoid-example {
+        .avoid-box {
             background: #fff;
             color: #2c3e50;
+            border-color: #2c3e50;
         }
 
-        .collect-example {
+        .collect-box {
             background: #000;
-            color: #000;
-            border: 2px solid #fff;
+            color: transparent;
+            border-color: #c0392b;
+        }
+
+        .warning-box {
+            font-size: 48px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
 
         .btn {
-            background: #e74c3c;
-            color: white;
-            border: none;
-            padding: 20px 60px;
-            font-family: 'VT323', monospace;
-            font-size: 36px;
+            background: #8b4513;
+            color: #f5f5dc;
+            border: 3px solid #5c4d3c;
+            padding: 15px 50px;
+            font-family: 'Special Elite', cursive;
+            font-size: 24px;
             cursor: pointer;
-            border-radius: 10px;
             text-transform: uppercase;
             letter-spacing: 3px;
-            box-shadow: 0 6px 0 #c0392b;
+            box-shadow: 4px 4px 0 #3d3429;
             transition: all 0.1s;
-            margin-top: 30px;
+            margin-top: 20px;
         }
 
         .btn:hover {
-            background: #c0392b;
-            transform: translateY(2px);
-            box-shadow: 0 4px 0 #a93226;
+            background: #5c4d3c;
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 #3d3429;
         }
 
         .btn:active {
-            transform: translateY(6px);
-            box-shadow: 0 0 0 #a93226;
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 #3d3429;
         }
 
         .final-score {
-            font-size: 72px;
-            color: #f39c12;
-            margin: 20px 0;
+            font-family: 'Special Elite', cursive;
+            font-size: 48px;
+            color: #c0392b;
+            margin: 15px 0;
+        }
+
+        .stats {
+            font-size: 18px;
+            margin: 10px 0;
+            color: #5c4d3c;
         }
 
         .hidden {
             display: none !important;
         }
 
-        /* Mobile controls hint */
-        .mobile-hint {
+        /* Trump warning */
+        .trump-warning {
             position: absolute;
-            bottom: 20px;
-            font-size: 20px;
-            color: rgba(255,255,255,0.7);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 120px;
+            z-index: 50;
+            animation: trumpAppear 0.5s ease;
+            text-shadow: 0 0 30px #ff0000;
+        }
+
+        @keyframes trumpAppear {
+            0% { transform: translate(-50%, -50%) scale(0); }
+            50% { transform: translate(-50%, -50%) scale(1.3); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .warning-text {
+            position: absolute;
+            top: 65%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Special Elite', cursive;
+            font-size: 32px;
+            color: #c0392b;
+            z-index: 50;
+            text-shadow: 2px 2px 0 #fff;
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(-50%) rotate(-2deg); }
+            50% { transform: translateX(-50%) rotate(2deg); }
         }
     </style>
 </head>
 <body>
     <div id="gameContainer">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div class="paper-texture"></div>
+        
+        <div class="header-stamps">
+            <div class="stamp top-secret">TOP SECRET</div>
+            <div class="stamp classified">CLASSIFIED</div>
+        </div>
+
+        <canvas id="gameCanvas" width="900" height="650"></canvas>
         
         <div class="ui-overlay">
-            <div>HIGH SCORE: <span id="highScore">0</span></div>
+            <div>HIGH: <span id="highScore">0</span></div>
         </div>
         
         <div class="score-display">
             <span id="score">0</span>
         </div>
 
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-label">TRUMP ALERT METER</div>
+
+        <!-- Trump Warning Overlay -->
+        <div id="trumpWarning" class="hidden">
+            <div class="trump-warning">🤬</div>
+            <div class="warning-text">TRUMP IS COMING!</div>
+        </div>
+
         <!-- Start Screen -->
         <div class="start-screen" id="startScreen">
-            <h1>CATCH TRUMPET</h1>
+            <h1>EPSTEIN FILES</h1>
+            <div class="subtitle">Declassified Document Recovery Mission</div>
+            
             <div class="instructions">
-                <h3>HOW TO PLAY</h3>
-                <p><strong>Press SPACE or CLICK to fly!</strong></p>
-                <p style="margin-top: 20px;">
-                    <span class="example avoid-example">REGULAR WORDS</span> = AVOID! ☠️
-                </p>
-                <p>
-                    <span class="example collect-example">██████</span> = COLLECT! ✓
-                </p>
-                <p style="margin-top: 15px; color: #3498db;">
-                    Touch the REDACTED black boxes for points<br>
-                    Avoid the white words or game over!
+                <h3>MISSION BRIEFING</h3>
+                <p><strong>Press SPACE or CLICK to navigate!</strong></p>
+                
+                <div class="example-row">
+                    <div class="example">
+                        <div class="example-box avoid-box">FLIGHT LOGS</div>
+                        <span style="color: #c0392b;">AVOID ☠️</span>
+                    </div>
+                    <div class="example">
+                        <div class="example-box collect-box">██████</div>
+                        <span style="color: #27ae60;">COLLECT ✓</span>
+                    </div>
+                    <div class="example">
+                        <div class="warning-box">🤬</div>
+                        <span style="color: #e74c3c;">EVERY 10 FILES!</span>
+                    </div>
+                </div>
+                
+                <p style="margin-top: 15px; font-size: 14px;">
+                    Navigate the 🔍 through the document maze.<br>
+                    Collect REDACTED black boxes for points.<br>
+                    <strong style="color: #c0392b;">WARNING:</strong> Every 10 files, an angry 🤬 appears!<br>
+                    Dodge him or it's GAME OVER!
                 </p>
             </div>
-            <button class="btn" onclick="startGame()">START GAME</button>
-            <p class="mobile-hint">Tap screen or press SPACE to jump</p>
+            
+            <button class="btn" id="startBtn">START MISSION</button>
         </div>
 
         <!-- Game Over Screen -->
         <div class="game-over-screen hidden" id="gameOverScreen">
-            <h2>GAME OVER</h2>
+            <h2>DOCUMENT SEALED</h2>
             <div class="final-score">
                 SCORE: <span id="finalScore">0</span>
             </div>
-            <p style="font-size: 28px; margin: 10px 0;">
-                Redacted Collected: <span id="collectedCount" style="color: #f39c12;">0</span>
-            </p>
-            <button class="btn" onclick="restartGame()">TRY AGAIN</button>
+            <div class="stats">
+                Files Declassified: <span id="filesCount" style="color: #27ae60; font-weight: bold;">0</span>
+            </div>
+            <div class="stats">
+                Trump Encounters Survived: <span id="trumpDodged" style="color: #f39c12; font-weight: bold;">0</span>
+            </div>
+            <button class="btn" id="restartBtn">NEW DOCUMENT</button>
         </div>
     </div>
 
@@ -227,136 +422,188 @@
         const ctx = canvas.getContext('2d');
         
         // Game state
-        let gameState = 'start'; // start, playing, gameover
+        let gameState = 'start';
         let score = 0;
-        let highScore = localStorage.getItem('catchTrumpetHighScore') || 0;
-        let collectedRedacted = 0;
+        let highScore = localStorage.getItem('epsteinFilesHighScore') || 0;
+        let filesCollected = 0;
+        let trumpEncounters = 0;
         let frameCount = 0;
-        let gameSpeed = 3;
+        let gameSpeed = 2.5;
+        let trumpActive = false;
+        let trumpTimer = 0;
         
         // Update high score display
         document.getElementById('highScore').textContent = highScore;
 
-        // Word banks
+        // Word banks - Epstein theme
         const regularWords = [
-            "Island", "Estate", "Ranch", "Palm Beach", "Paris", "Manhattan",
-            "Gulfstream", "Boeing", "Pilot", "Flight", "JFK", "Passenger",
-            "Trust", "Fund", "Bank", "Wire", "Transfer", "Account",
-            "Meeting", "Schedule", "Email", "Document", "Memo",
-            "Secretary", "Assistant", "Manager", "Lunch", "Dinner",
-            "Camera", "Video", "Photo", "Phone", "Laptop"
+            "Flight Logs", "Little Black Book", "Private Island", "Palm Beach Mansion",
+            "Lolita Express", "Zorro Ranch", "New Mexico Estate", "St. James Island",
+            "Manhattan Townhouse", "Paris Apartment", "Gulfstream", "Boeing 727",
+            "Maxwell", "Ghislaine", "Recruiter", "Massage Table", "NDA Agreement",
+            "Settlement", "Legal Team", "Attorney", "Broker", "Accountant",
+            "Wire Transfer", "Offshore Account", "Shell Company", "Trust Fund",
+            "Birthday Book", "Contact List", "Appointment", "Calendar Entry"
         ];
 
         const redactedWords = [
-            "Epstein", "Maxwell", "Clinton", "Trump", "Andrew",
-            "Flight Logs", "Little Black Book", "Victim Names", "Client List",
-            "Island Visits", "Private Jet", "Lolita Express", "Pedophile",
-            "Sex Trafficking", "Underage Girls", "Massage", "Recruitment",
-            "NDA Settlement", "Legal Threats", "Cover Up"
+            "Epstein", "Clinton", "Trump", "Andrew", "Dershowitz", "Wexner",
+            "Brunel", "Jean-Luc", "Staley", "Barclays", "Victims Names",
+            "Client List", "Video Tapes", "Evidence", "Cover Up", "Conspiracy",
+            "Pedophile Ring", "Sex Trafficking", "Underage Girls", "Recruitment",
+            "Island Visits", "Flight Records", "Deleted Emails", "Encrypted Files",
+            "Compromised", "Blackmail", "Payoff", "Hush Money", "Silenced Witness"
         ];
 
-        // Player (Trumpet character)
+        // Player (Magnifying glass)
         const player = {
-            x: 150,
-            y: 300,
-            width: 40,
-            height: 30,
+            x: 120,
+            y: 325,
+            width: 50,
+            height: 50,
             velocity: 0,
-            gravity: 0.5,
-            jumpStrength: -10,
+            gravity: 0.4,
+            jumpStrength: -8,
             rotation: 0,
-            emoji: '🎺'
+            emoji: '🔍'
         };
 
-        // Obstacles array
+        // Trump boss
+        const trump = {
+            x: -200,
+            y: 325,
+            width: 80,
+            height: 80,
+            speed: 5,
+            emoji: '🤬',
+            active: false
+        };
+
+        // Game objects
         let obstacles = [];
         let redactedItems = [];
         let particles = [];
+        let documents = [];
 
-        // Background clouds
-        let clouds = [];
-        for (let i = 0; i < 5; i++) {
-            clouds.push({
+        // Initialize background documents
+        for (let i = 0; i < 8; i++) {
+            documents.push({
                 x: Math.random() * canvas.width,
-                y: Math.random() * 200,
-                speed: 0.5 + Math.random() * 0.5,
-                size: 30 + Math.random() * 20
+                y: Math.random() * canvas.height,
+                width: 150 + Math.random() * 100,
+                height: 200 + Math.random() * 100,
+                speed: 0.3 + Math.random() * 0.4,
+                opacity: 0.05 + Math.random() * 0.08,
+                lines: Math.floor(Math.random() * 8) + 5
             });
         }
 
-        // Input handling
-        function jump() {
-            if (gameState === 'playing') {
+        // Input handling - Fixed for better responsiveness
+        let spacePressed = false;
+
+        function handleJump(e) {
+            if (e.type === 'keydown' && e.code !== 'Space') return;
+            if (e.type === 'keydown') e.preventDefault();
+            
+            if (gameState === 'playing' && !spacePressed) {
+                spacePressed = true;
                 player.velocity = player.jumpStrength;
             }
         }
 
-        document.addEventListener('keydown', (e) => {
+        function handleKeyUp(e) {
             if (e.code === 'Space') {
-                e.preventDefault();
-                if (gameState === 'start') {
-                    startGame();
-                } else if (gameState === 'playing') {
-                    jump();
-                } else if (gameState === 'gameover') {
-                    restartGame();
-                }
+                spacePressed = false;
             }
-        });
+        }
 
-        canvas.addEventListener('mousedown', () => {
-            if (gameState === 'playing') jump();
+        // Event listeners
+        window.addEventListener('keydown', handleJump, { passive: false });
+        window.addEventListener('keyup', handleKeyUp);
+        
+        canvas.addEventListener('mousedown', (e) => {
+            if (gameState === 'playing') {
+                player.velocity = player.jumpStrength;
+            }
         });
 
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
             if (gameState === 'playing') {
-                jump();
+                player.velocity = player.jumpStrength;
             }
-        });
+        }, { passive: false });
+
+        // Button event listeners
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('restartBtn').addEventListener('click', restartGame);
 
         // Spawn obstacles
         function spawnObstacle() {
             const word = regularWords[Math.floor(Math.random() * regularWords.length)];
-            const y = Math.random() * (canvas.height - 100) + 50;
+            const y = 80 + Math.random() * (canvas.height - 200);
             
             obstacles.push({
-                x: canvas.width,
+                x: canvas.width + 50,
                 y: y,
                 word: word,
-                width: ctx.measureText(word).width + 20,
-                height: 40,
+                width: ctx.measureText(word).width + 30,
+                height: 35,
                 passed: false
             });
         }
 
         // Spawn redacted items
         function spawnRedacted() {
-            const word = redactedWords[Math.floor(Math.random() * redactedWords.length)];
-            const y = Math.random() * (canvas.height - 100) + 50;
+            const y = 80 + Math.random() * (canvas.height - 200);
             
             redactedItems.push({
-                x: canvas.width,
+                x: canvas.width + 50,
                 y: y,
-                word: word,
-                width: 120,
-                height: 40,
+                width: 100,
+                height: 35,
                 collected: false
             });
         }
 
+        // Activate Trump
+        function activateTrump() {
+            trumpActive = true;
+            trump.active = true;
+            trump.x = -150;
+            trump.y = player.y;
+            trumpEncounters++;
+            
+            // Show warning
+            const warning = document.getElementById('trumpWarning');
+            warning.classList.remove('hidden');
+            
+            setTimeout(() => {
+                warning.classList.add('hidden');
+            }, 2000);
+        }
+
         // Create particles
-        function createParticles(x, y, color) {
-            for (let i = 0; i < 8; i++) {
+        function createParticles(x, y, color, count = 10) {
+            for (let i = 0; i < count; i++) {
                 particles.push({
                     x: x,
                     y: y,
-                    vx: (Math.random() - 0.5) * 8,
-                    vy: (Math.random() - 0.5) * 8,
-                    life: 30,
-                    color: color
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 40,
+                    color: color,
+                    size: 3 + Math.random() * 4
                 });
             }
+        }
+
+        // Check collision
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
         }
 
         // Update game
@@ -368,154 +615,230 @@
             // Update player
             player.velocity += player.gravity;
             player.y += player.velocity;
-            player.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, player.velocity * 0.05));
+            player.rotation = Math.min(Math.PI / 6, Math.max(-Math.PI / 6, player.velocity * 0.04));
 
             // Check boundaries
-            if (player.y < 0) {
-                player.y = 0;
+            if (player.y < 60) {
+                player.y = 60;
                 player.velocity = 0;
             }
-            if (player.y > canvas.height - player.height) {
+            if (player.y > canvas.height - player.height - 20) {
                 gameOver();
             }
 
-            // Update clouds
-            clouds.forEach(cloud => {
-                cloud.x -= cloud.speed;
-                if (cloud.x < -100) {
-                    cloud.x = canvas.width + 100;
-                    cloud.y = Math.random() * 200;
+            // Update background documents
+            documents.forEach(doc => {
+                doc.x -= doc.speed;
+                if (doc.x < -300) {
+                    doc.x = canvas.width + 50;
+                    doc.y = Math.random() * (canvas.height - 300) + 50;
                 }
             });
 
-            // Spawn obstacles and redacted items
-            if (frameCount % 90 === 0) {
-                if (Math.random() < 0.7) spawnObstacle();
+            // Spawn obstacles and redacted
+            if (!trumpActive && frameCount % 100 === 0) {
+                if (Math.random() < 0.6) spawnObstacle();
             }
-            if (frameCount % 120 === 0) {
+            if (!trumpActive && frameCount % 140 === 0) {
                 spawnRedacted();
             }
 
             // Update obstacles
-            obstacles = obstacles.filter(obs => {
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
                 obs.x -= gameSpeed;
 
-                // Check collision with player
-                if (!obs.passed &&
-                    player.x < obs.x + obs.width &&
-                    player.x + player.width > obs.x &&
-                    player.y < obs.y + obs.height &&
-                    player.y + player.height > obs.y) {
+                // Collision with player
+                if (checkCollision(player, obs)) {
+                    createParticles(player.x + player.width/2, player.y + player.height/2, '#c0392b', 20);
                     gameOver();
                 }
 
-                return obs.x > -200;
-            });
+                if (obs.x < -200) {
+                    obstacles.splice(i, 1);
+                }
+            }
 
             // Update redacted items
-            redactedItems = redactedItems.filter(item => {
-                if (item.collected) return false;
-                
+            for (let i = redactedItems.length - 1; i >= 0; i--) {
+                const item = redactedItems[i];
                 item.x -= gameSpeed;
 
-                // Check collection
-                if (player.x < item.x + item.width &&
-                    player.x + player.width > item.x &&
-                    player.y < item.y + item.height &&
-                    player.y + player.height > item.y) {
-                    
+                // Collection
+                if (!item.collected && checkCollision(player, item)) {
                     item.collected = true;
-                    score += 50;
-                    collectedRedacted++;
-                    createParticles(item.x + item.width/2, item.y + item.height/2, '#f39c12');
-                    document.getElementById('score').textContent = score;
+                    filesCollected++;
+                    score += 100;
+                    createParticles(item.x + item.width/2, item.y + item.height/2, '#f39c12', 15);
                     
-                    // Speed up slightly
-                    if (collectedRedacted % 5 === 0) {
-                        gameSpeed += 0.2;
+                    // Update progress bar
+                    const progress = (filesCollected % 10) * 10;
+                    document.getElementById('progressFill').style.width = progress + '%';
+                    
+                    // Check for Trump activation
+                    if (filesCollected % 10 === 0 && filesCollected > 0) {
+                        activateTrump();
                     }
                     
-                    return false;
+                    // Speed up
+                    if (filesCollected % 5 === 0) {
+                        gameSpeed += 0.15;
+                    }
+                    
+                    redactedItems.splice(i, 1);
+                    document.getElementById('score').textContent = score;
+                    continue;
                 }
 
-                return item.x > -200;
-            });
+                if (item.x < -200) {
+                    redactedItems.splice(i, 1);
+                }
+            }
+
+            // Update Trump
+            if (trumpActive) {
+                trump.x += trump.speed;
+                
+                // Trump follows player vertically (with delay)
+                const targetY = player.y - 15;
+                trump.y += (targetY - trump.y) * 0.05;
+                
+                // Collision with Trump
+                if (checkCollision(player, trump)) {
+                    createParticles(player.x + player.width/2, player.y + player.height/2, '#e74c3c', 30);
+                    gameOver();
+                }
+                
+                // Trump passes through
+                if (trump.x > canvas.width + 100) {
+                    trumpActive = false;
+                    trump.active = false;
+                    score += 500; // Bonus for surviving Trump
+                    document.getElementById('score').textContent = score;
+                    createParticles(canvas.width - 50, trump.y + 40, '#27ae60', 20);
+                }
+            }
 
             // Update particles
-            particles = particles.filter(p => {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
                 p.x += p.vx;
                 p.y += p.vy;
+                p.vy += 0.2; // gravity
                 p.life--;
-                return p.life > 0;
-            });
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
         }
 
         // Draw game
         function draw() {
             // Clear canvas
-            ctx.fillStyle = '#87CEEB';
+            ctx.fillStyle = '#f5f5dc';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw gradient sky
-            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            gradient.addColorStop(0, '#87CEEB');
-            gradient.addColorStop(1, '#E0F6FF');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Draw clouds
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            clouds.forEach(cloud => {
+            // Draw background documents
+            ctx.strokeStyle = 'rgba(139, 119, 101, 0.3)';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            documents.forEach(doc => {
+                ctx.globalAlpha = doc.opacity;
+                ctx.fillRect(doc.x, doc.y, doc.width, doc.height);
+                ctx.strokeRect(doc.x, doc.y, doc.width, doc.height);
+                
+                // Draw document lines
                 ctx.beginPath();
-                ctx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
-                ctx.arc(cloud.x + cloud.size * 0.5, cloud.y - cloud.size * 0.2, cloud.size * 0.8, 0, Math.PI * 2);
-                ctx.arc(cloud.x - cloud.size * 0.5, cloud.y - cloud.size * 0.1, cloud.size * 0.7, 0, Math.PI * 2);
-                ctx.fill();
+                for (let i = 0; i < doc.lines; i++) {
+                    const lineY = doc.y + 30 + i * 20;
+                    ctx.moveTo(doc.x + 10, lineY);
+                    ctx.lineTo(doc.x + doc.width - 10, lineY);
+                }
+                ctx.strokeStyle = 'rgba(139, 119, 101, 0.2)';
+                ctx.stroke();
+                ctx.globalAlpha = 1;
             });
 
             if (gameState === 'playing' || gameState === 'gameover') {
-                // Draw obstacles (regular words - WHITE, avoid these!)
-                ctx.font = 'bold 24px "VT323", monospace';
-                ctx.textAlign = 'center';
+                ctx.font = 'bold 16px "Courier Prime", monospace';
+                ctx.textAlign = 'left';
+
+                // Draw obstacles (regular words)
                 obstacles.forEach(obs => {
                     // Word background
                     ctx.fillStyle = '#fff';
-                    ctx.fillRect(obs.x - 10, obs.y - 10, ctx.measureText(obs.word).width + 20, 40);
+                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
                     
-                    // Word border
-                    ctx.strokeStyle = '#2c3e50';
+                    // Border
+                    ctx.strokeStyle = '#5c4d3c';
                     ctx.lineWidth = 2;
-                    ctx.strokeRect(obs.x - 10, obs.y - 10, ctx.measureText(obs.word).width + 20, 40);
+                    ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
+                    
+                    // Shadow
+                    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                    ctx.fillRect(obs.x + 3, obs.y + 3, obs.width, obs.height);
                     
                     // Word text
-                    ctx.fillStyle = '#2c3e50';
-                    ctx.fillText(obs.word, obs.x + ctx.measureText(obs.word).width / 2, obs.y + 20);
+                    ctx.fillStyle = '#3d3429';
+                    ctx.fillText(obs.word, obs.x + 10, obs.y + 23);
                 });
 
-                // Draw redacted items (BLACK boxes - collect these!)
+                // Draw redacted items
                 redactedItems.forEach(item => {
                     if (!item.collected) {
                         // Black redacted box
                         ctx.fillStyle = '#000';
                         ctx.fillRect(item.x, item.y, item.width, item.height);
                         
-                        // Border
-                        ctx.strokeStyle = '#e74c3c';
+                        // Red border
+                        ctx.strokeStyle = '#c0392b';
                         ctx.lineWidth = 3;
                         ctx.strokeRect(item.x, item.y, item.width, item.height);
                         
+                        // Redacted stripes
+                        ctx.strokeStyle = '#c0392b';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        for (let i = 0; i < item.width; i += 10) {
+                            ctx.moveTo(item.x + i, item.y);
+                            ctx.lineTo(item.x + i - 5, item.y + item.height);
+                        }
+                        ctx.stroke();
+                        
                         // Glow effect
-                        ctx.shadowColor = '#e74c3c';
-                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = '#c0392b';
+                        ctx.shadowBlur = 15;
+                        ctx.strokeRect(item.x - 2, item.y - 2, item.width + 4, item.height + 4);
                         ctx.shadowBlur = 0;
                     }
                 });
 
-                // Draw player (Trumpet emoji)
+                // Draw Trump
+                if (trumpActive) {
+                    ctx.font = '70px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    // Angry effect
+                    ctx.save();
+                    ctx.translate(trump.x + trump.width/2, trump.y + trump.height/2);
+                    const shake = Math.sin(frameCount * 0.5) * 3;
+                    ctx.rotate(shake * Math.PI / 180);
+                    ctx.fillText(trump.emoji, 0, 0);
+                    ctx.restore();
+                    
+                    // Angry aura
+                    ctx.strokeStyle = 'rgba(231, 76, 60, 0.5)';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(trump.x + trump.width/2, trump.y + trump.height/2, 50 + Math.sin(frameCount * 0.2) * 5, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                // Draw player (Magnifying glass)
                 ctx.save();
                 ctx.translate(player.x + player.width/2, player.y + player.height/2);
                 ctx.rotate(player.rotation);
-                ctx.font = '40px Arial';
+                ctx.font = '45px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(player.emoji, 0, 0);
@@ -524,12 +847,12 @@
                 // Draw particles
                 particles.forEach(p => {
                     ctx.fillStyle = p.color;
-                    ctx.globalAlpha = p.life / 30;
+                    ctx.globalAlpha = p.life / 40;
                     ctx.beginPath();
-                    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.globalAlpha = 1;
                 });
+                ctx.globalAlpha = 1;
             }
         }
 
@@ -544,11 +867,13 @@
         function startGame() {
             gameState = 'playing';
             score = 0;
-            collectedRedacted = 0;
+            filesCollected = 0;
+            trumpEncounters = 0;
             frameCount = 0;
-            gameSpeed = 3;
+            gameSpeed = 2.5;
+            trumpActive = false;
             
-            player.y = 300;
+            player.y = 325;
             player.velocity = 0;
             
             obstacles = [];
@@ -556,22 +881,26 @@
             particles = [];
             
             document.getElementById('score').textContent = '0';
+            document.getElementById('progressFill').style.width = '0%';
             document.getElementById('startScreen').classList.add('hidden');
             document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('trumpWarning').classList.add('hidden');
         }
 
         // Game over
         function gameOver() {
             gameState = 'gameover';
+            trumpActive = false;
             
             if (score > highScore) {
                 highScore = score;
-                localStorage.setItem('catchTrumpetHighScore', highScore);
+                localStorage.setItem('epsteinFilesHighScore', highScore);
                 document.getElementById('highScore').textContent = highScore;
             }
             
             document.getElementById('finalScore').textContent = score;
-            document.getElementById('collectedCount').textContent = collectedRedacted;
+            document.getElementById('filesCount').textContent = filesCollected;
+            document.getElementById('trumpDodged').textContent = trumpEncounters;
             document.getElementById('gameOverScreen').classList.remove('hidden');
         }
 
