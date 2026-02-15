@@ -574,16 +574,24 @@
         let particles = [];
         let documents = [];
 
-        // Initialize background documents
-        for (let i = 0; i < 8; i++) {
+        // Initialize background documents - AUTHENTIC FBI/DOJ FILES
+        const caseNumbers = [
+            "1:19-cr-00490-RMB", "1:21-cr-00412-RA", "1:08-cr-00880-SJ",
+            "1:19-cv-08611-RA", "EFTA-2026-001", "USAO-SDNY-2019"
+        ];
+        
+        for (let i = 0; i < 10; i++) {
             documents.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
-                width: 150 + Math.random() * 100,
-                height: 200 + Math.random() * 100,
-                speed: 0.3 + Math.random() * 0.4,
-                opacity: 0.05 + Math.random() * 0.08,
-                lines: Math.floor(Math.random() * 8) + 5
+                width: 180 + Math.random() * 100,
+                height: 240 + Math.random() * 120,
+                speed: 0.2 + Math.random() * 0.3,
+                opacity: 0.04 + Math.random() * 0.06,
+                caseNumber: caseNumbers[Math.floor(Math.random() * caseNumbers.length)],
+                docType: Math.random() > 0.5 ? 'FLIGHT LOG' : 'CASE FILE',
+                hasRedactions: Math.random() > 0.3,
+                redactionCount: Math.floor(Math.random() * 5) + 1
             });
         }
 
@@ -668,16 +676,20 @@
             });
         }
 
-        // Spawn redacted items
+        // Spawn redacted items with REAL NAMES to reveal
         function spawnRedacted() {
             const y = 80 + Math.random() * (canvas.height - 200);
+            const word = redactedWords[Math.floor(Math.random() * redactedWords.length)];
             
             redactedItems.push({
                 x: canvas.width + 50,
                 y: y,
-                width: 100,
-                height: 35,
-                collected: false
+                width: 120,
+                height: 25,
+                word: word,
+                collected: false,
+                exploding: false,
+                explosionFrame: 0
             });
         }
 
@@ -708,9 +720,55 @@
                     vy: (Math.random() - 0.5) * 10,
                     life: 40,
                     color: color,
-                    size: 3 + Math.random() * 4
+                    size: 3 + Math.random() * 4,
+                    type: 'normal'
                 });
             }
+        }
+
+        // Create EXPLOSION effect that reveals the name
+        function createExplosion(x, y, revealedName) {
+            // Create black ink particles
+            for (let i = 0; i < 20; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: (Math.random() - 0.5) * 15,
+                    life: 40,
+                    color: '#000000',
+                    size: 4 + Math.random() * 6,
+                    type: 'ink'
+                });
+            }
+            
+            // Create red classified stamp particles
+            for (let i = 0; i < 15; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 12,
+                    vy: (Math.random() - 0.5) * 12,
+                    life: 35,
+                    color: '#c0392b',
+                    size: 3 + Math.random() * 4,
+                    type: 'stamp'
+                });
+            }
+            
+            // Add floating text particle with revealed name
+            particles.push({
+                x: x,
+                y: y,
+                vx: 0,
+                vy: -2,
+                life: 60,
+                color: '#c0392b',
+                size: 14,
+                type: 'text',
+                text: revealedName,
+                font: 'bold 14px "Special Elite", monospace'
+            });
         }
 
         // Check collision
@@ -777,14 +835,27 @@
             // Update redacted items
             for (let i = redactedItems.length - 1; i >= 0; i--) {
                 const item = redactedItems[i];
+                
+                // Handle explosion animation
+                if (item.exploding) {
+                    item.explosionFrame++;
+                    if (item.explosionFrame > 30) {
+                        redactedItems.splice(i, 1);
+                    }
+                    continue;
+                }
+                
                 item.x -= gameSpeed;
 
-                // Collection
-                if (!item.collected && checkCollision(player, item)) {
+                // Collection - TRIGGER EXPLOSION
+                if (!item.collected && !item.exploding && checkCollision(player, item)) {
+                    item.exploding = true;
                     item.collected = true;
                     filesCollected++;
                     score += 100;
-                    createParticles(item.x + item.width/2, item.y + item.height/2, '#f39c12', 15);
+                    
+                    // Create EXPLOSION particles
+                    createExplosion(item.x + item.width/2, item.y + item.height/2, item.word);
                     
                     // Update progress bar
                     const progress = (filesCollected % 10) * 10;
@@ -800,12 +871,11 @@
                         gameSpeed += 0.15;
                     }
                     
-                    redactedItems.splice(i, 1);
                     document.getElementById('score').textContent = score;
                     continue;
                 }
 
-                if (item.x < -200) {
+                if (item.x < -200 && !item.exploding) {
                     redactedItems.splice(i, 1);
                 }
             }
@@ -853,23 +923,73 @@
             ctx.fillStyle = '#f5f5dc';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw background documents
-            ctx.strokeStyle = 'rgba(139, 119, 101, 0.3)';
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            // Draw background documents - AUTHENTIC FBI/DOJ CASE FILES
             documents.forEach(doc => {
                 ctx.globalAlpha = doc.opacity;
+                
+                // Document background
+                ctx.fillStyle = '#fefefe';
                 ctx.fillRect(doc.x, doc.y, doc.width, doc.height);
+                
+                // Document border
+                ctx.strokeStyle = '#c0c0c0';
+                ctx.lineWidth = 1;
                 ctx.strokeRect(doc.x, doc.y, doc.width, doc.height);
                 
-                // Draw document lines
-                ctx.beginPath();
-                for (let i = 0; i < doc.lines; i++) {
-                    const lineY = doc.y + 30 + i * 20;
+                // Document header bar
+                ctx.fillStyle = '#e8e8e8';
+                ctx.fillRect(doc.x, doc.y, doc.width, 30);
+                ctx.strokeRect(doc.x, doc.y, doc.width, 30);
+                
+                // Case file header text
+                ctx.font = 'bold 10px "Courier Prime", monospace';
+                ctx.fillStyle = '#000';
+                ctx.textAlign = 'left';
+                ctx.fillText('DEPARTMENT OF JUSTICE', doc.x + 5, doc.y + 12);
+                ctx.font = '9px "Courier Prime", monospace';
+                ctx.fillText(`CASE: ${doc.caseNumber}`, doc.x + 5, doc.y + 24);
+                ctx.fillText(doc.docType, doc.x + doc.width - 70, doc.y + 24);
+                
+                // Draw authentic document lines
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+                ctx.lineWidth = 0.5;
+                const lineHeight = 16;
+                const startY = doc.y + 50;
+                
+                for (let i = 0; i < 12; i++) {
+                    const lineY = startY + i * lineHeight;
+                    ctx.beginPath();
                     ctx.moveTo(doc.x + 10, lineY);
                     ctx.lineTo(doc.x + doc.width - 10, lineY);
+                    ctx.stroke();
                 }
-                ctx.strokeStyle = 'rgba(139, 119, 101, 0.2)';
-                ctx.stroke();
+                
+                // Draw fake redactions like in real files
+                if (doc.hasRedactions) {
+                    ctx.fillStyle = '#000000';
+                    for (let r = 0; r < doc.redactionCount; r++) {
+                        const redX = doc.x + 15 + Math.random() * (doc.width - 80);
+                        const redY = startY + r * 25 + Math.random() * 10;
+                        const redWidth = 40 + Math.random() * 60;
+                        const redHeight = 12;
+                        
+                        ctx.fillRect(redX, redY - 10, redWidth, redHeight);
+                        
+                        // Add slight texture to redaction
+                        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                        for (let t = 0; t < 5; t++) {
+                            ctx.fillRect(redX + Math.random() * redWidth, redY - 10, 1, redHeight);
+                        }
+                        ctx.fillStyle = '#000000';
+                    }
+                }
+                
+                // Add "PAGE X OF Y" footer
+                ctx.font = '8px "Courier Prime", monospace';
+                ctx.fillStyle = '#666';
+                ctx.textAlign = 'center';
+                ctx.fillText(`PAGE ${Math.floor(Math.random() * 20) + 1} OF 247`, doc.x + doc.width/2, doc.y + doc.height - 8);
+                
                 ctx.globalAlpha = 1;
             });
 
@@ -877,53 +997,85 @@
                 ctx.font = 'bold 16px "Courier Prime", monospace';
                 ctx.textAlign = 'left';
 
-                // Draw obstacles (regular words)
+                // Draw obstacles (regular words) - Typewriter style like real docs
+                ctx.font = '16px "Courier Prime", monospace';
+                ctx.textAlign = 'left';
                 obstacles.forEach(obs => {
-                    // Word background
-                    ctx.fillStyle = '#fff';
-                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-                    
-                    // Border
-                    ctx.strokeStyle = '#5c4d3c';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
-                    
-                    // Shadow
-                    ctx.fillStyle = 'rgba(0,0,0,0.1)';
-                    ctx.fillRect(obs.x + 3, obs.y + 3, obs.width, obs.height);
-                    
-                    // Word text
-                    ctx.fillStyle = '#3d3429';
-                    ctx.fillText(obs.word, obs.x + 10, obs.y + 23);
+                    // Typewritten text look
+                    ctx.fillStyle = '#2c2416';
+                    ctx.fillText(obs.word, obs.x, obs.y + 20);
                 });
 
-                // Draw redacted items
+                // Draw redacted items - AUTHENTIC GOVERNMENT STYLE
                 redactedItems.forEach(item => {
-                    if (!item.collected) {
-                        // Black redacted box
-                        ctx.fillStyle = '#000';
+                    if (!item.collected && !item.exploding) {
+                        // AUTHENTIC REDACTION: Solid black box like real classified docs
+                        ctx.fillStyle = '#000000';
                         ctx.fillRect(item.x, item.y, item.width, item.height);
                         
-                        // Red border
-                        ctx.strokeStyle = '#c0392b';
-                        ctx.lineWidth = 3;
+                        // Subtle border for definition (like scanned documents)
+                        ctx.strokeStyle = '#1a1a1a';
+                        ctx.lineWidth = 1;
                         ctx.strokeRect(item.x, item.y, item.width, item.height);
                         
-                        // Redacted stripes
-                        ctx.strokeStyle = '#c0392b';
-                        ctx.lineWidth = 1;
-                        ctx.beginPath();
-                        for (let i = 0; i < item.width; i += 10) {
-                            ctx.moveTo(item.x + i, item.y);
-                            ctx.lineTo(item.x + i - 5, item.y + item.height);
+                        // Add slight noise texture to mimic blacked-out marker
+                        ctx.fillStyle = 'rgba(255,255,255,0.03)';
+                        for (let i = 0; i < item.width; i += 4) {
+                            if (Math.random() > 0.5) {
+                                ctx.fillRect(item.x + i, item.y, 2, item.height);
+                            }
                         }
-                        ctx.stroke();
+                    }
+                    
+                    // Draw explosion revealing the name
+                    if (item.exploding) {
+                        const progress = item.explosionFrame / 30;
                         
-                        // Glow effect
-                        ctx.shadowColor = '#c0392b';
-                        ctx.shadowBlur = 15;
-                        ctx.strokeRect(item.x - 2, item.y - 2, item.width + 4, item.height + 4);
-                        ctx.shadowBlur = 0;
+                        // Draw fragments flying away
+                        ctx.fillStyle = '#000000';
+                        const fragments = 6;
+                        for (let j = 0; j < fragments; j++) {
+                            const angle = (j / fragments) * Math.PI * 2 + progress * Math.PI;
+                            const distance = progress * 60;
+                            const fragX = item.x + item.width/2 + Math.cos(angle) * distance;
+                            const fragY = item.y + item.height/2 + Math.sin(angle) * distance;
+                            const fragSize = (1 - progress) * 20;
+                            
+                            ctx.globalAlpha = 1 - progress;
+                            ctx.fillRect(fragX - fragSize/2, fragY - fragSize/2, fragSize, fragSize);
+                        }
+                        ctx.globalAlpha = 1;
+                        
+                        // Draw REVEALED NAME
+                        if (item.explosionFrame > 5) {
+                            ctx.font = 'bold 16px "Courier Prime", monospace';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            
+                            // Text shadow for depth
+                            ctx.fillStyle = 'rgba(192, 57, 43, 0.3)';
+                            ctx.fillText(item.word, item.x + item.width/2 + 2, item.y + item.height/2 + 2);
+                            
+                            // Main text - RED like a stamp
+                            ctx.fillStyle = '#c0392b';
+                            ctx.globalAlpha = Math.min(1, (item.explosionFrame - 5) / 10);
+                            ctx.fillText(item.word, item.x + item.width/2, item.y + item.height/2);
+                            ctx.globalAlpha = 1;
+                            
+                            // "DECLASSIFIED" stamp effect
+                            ctx.save();
+                            ctx.translate(item.x + item.width/2, item.y - 20);
+                            ctx.rotate(-0.3);
+                            ctx.font = 'bold 12px "Special Elite", cursive';
+                            ctx.strokeStyle = '#c0392b';
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(-40, -10, 80, 20);
+                            ctx.fillStyle = '#c0392b';
+                            ctx.globalAlpha = Math.min(1, (item.explosionFrame - 10) / 10);
+                            ctx.fillText('DECLASSIFIED', 0, 0);
+                            ctx.globalAlpha = 1;
+                            ctx.restore();
+                        }
                     }
                 });
 
@@ -961,11 +1113,41 @@
 
                 // Draw particles
                 particles.forEach(p => {
-                    ctx.fillStyle = p.color;
-                    ctx.globalAlpha = p.life / 40;
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                    ctx.fill();
+                    if (p.type === 'text') {
+                        // Draw revealed name floating up
+                        ctx.font = p.font || 'bold 14px "Courier Prime", monospace';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        
+                        // Glow effect
+                        ctx.shadowColor = p.color;
+                        ctx.shadowBlur = 10;
+                        ctx.fillStyle = p.color;
+                        ctx.globalAlpha = Math.min(1, p.life / 20);
+                        ctx.fillText(p.text, p.x, p.y);
+                        ctx.shadowBlur = 0;
+                    } else if (p.type === 'ink') {
+                        // Draw ink splatter particles
+                        ctx.fillStyle = p.color;
+                        ctx.globalAlpha = (p.life / 40) * 0.8;
+                        
+                        // Irregular ink shape
+                        ctx.beginPath();
+                        ctx.moveTo(p.x - p.size, p.y);
+                        ctx.lineTo(p.x, p.y - p.size * 0.7);
+                        ctx.lineTo(p.x + p.size * 0.8, p.y - p.size * 0.3);
+                        ctx.lineTo(p.x + p.size * 0.5, p.y + p.size * 0.6);
+                        ctx.lineTo(p.x - p.size * 0.6, p.y + p.size * 0.4);
+                        ctx.closePath();
+                        ctx.fill();
+                    } else {
+                        // Normal particles
+                        ctx.fillStyle = p.color;
+                        ctx.globalAlpha = p.life / 40;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
                 });
                 ctx.globalAlpha = 1;
             }
